@@ -91,7 +91,7 @@ class RuleGen():
 
             percent_displayed = (display_count / self.count[chartype]) * 100
 
-            title_str = 'Top {} {} out of {} ({:.1f}% coverage)'.format(display_len, friendly, num_rules, percent_displayed)
+            title_str = 'Top {:,} {} out of {:,} ({:.1f}% coverage)'.format(display_len, friendly, num_rules, percent_displayed)
             print(title_str)
             print('='*len(title_str))
 
