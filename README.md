@@ -1,15 +1,13 @@
 # password_stretcher
-PASSWORDS, NED!  IN AN OPEN FIEEEELD!!
+### PASSWORDS, NED!  IN AN OPEN FIEEEELD!!
 
-###
-A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
+#### A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
 
-Still a work in progress.  In its current state, it only displays informative information about an analyzed list.
+#### Still a work in progress.  In its current state, it only displays informative information about an analyzed list.
 
 <br>
 
-##
-How it works:
+### How it works:
 
 <ol>
 	<li>
@@ -28,7 +26,7 @@ How it works:
 
 <br>
 
-#### Basic usage:
+### Basic usage:
 ~~~~
 cat wordlist | ./stretcher.py --report
 19,297 processed / 70,702 skipped          
