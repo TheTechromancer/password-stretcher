@@ -39,9 +39,9 @@ max_cap     = 128           # max number of capitaliztion mutations per word
 
 chartypes   = {
     # number    # friendly
-    1:          'Strings',
-    2:          'Digits',
-    4:          'Specials'
+    1:          'string mutations',
+    2:          'digit mutations',
+    4:          'special mutations'
 }
 
 delimiter = b'\x00'         # unique unprintable character - used internally
@@ -554,7 +554,7 @@ if __name__ == '__main__':
         o = RuleGen(options.wordlist, leet=True)
         o.parse_list()
         if options.report:
-            o.report()
+            o.report(limit=10)
 
         if options.save:
             with open(str(options.save), 'wb') as f:
