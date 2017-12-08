@@ -3,7 +3,7 @@
 
 A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
 
-Still a work in progress.  In its current state, it only displays informative information about an analyzed list.
+Still a work in progress.  In its current state, it only displays informative stats about an analyzed list.
 
 <br>
 
@@ -31,8 +31,8 @@ Still a work in progress.  In its current state, it only displays informative in
 cat wordlist | ./stretcher.py --report
 19,297 processed / 70,702 skipped          
 
-Top 10 string mutations out of 1490 (57.8% coverage)
-====================================================
+Top 10 string mutations out of 1,490 (57.8% coverage)
+=====================================================
   5326:  "__1"
   2698:  "__123"
   993:  "__12"
@@ -45,8 +45,8 @@ Top 10 string mutations out of 1490 (57.8% coverage)
   322:  "__3"
 
 
-Top 10 digit mutations out of 8446 (3.9% coverage)
-==================================================
+Top 10 digit mutations out of 8,446 (3.9% coverage)
+===================================================
   114:  "dragon__"
   102:  "qwerty__"
   96:  "password__"
