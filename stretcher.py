@@ -6,7 +6,7 @@ TODO:
 # hashcat rules
 RuleGen.write(self, percent=90):
 
-# sublist output
+# output string list
 class WordGen():
 
 # overseer
@@ -21,7 +21,6 @@ update _read_stdin to store words in TemporaryFile()
 
 
 '''
-
 import pickle
 import itertools
 from time import sleep
@@ -44,60 +43,62 @@ chartypes   = {
     4:          'special mutations'
 }
 
-delimiter = b'\x00'         # unique unprintable character - used internally
+string_delim = b'\x00'      # unique unprintable placeholder for strings
+digit_delim = b'\x01'             # unique unprintable placeholder for digits
+
 
 
 ### CLASSES ###
 
 class RuleGen():
 
-    def __init__(self, in_list, leet=True):
-
-        self.rules = {
-            1: {}, # alpha
-            2: {}  # number
-            #4: {}  # special
-        }
-
-        self.count = {
-            1: 0,
-            2: 0
-        }
-        self.words_processed = 0
-        self.words_skipped = 0
-
-        self.leet = leet
+    def __init__(self, in_list, leet=True, custom_digits=[]):
 
         self.in_list = in_list
+        self.leet = leet
+        self.custom_digits = list(custom_digits)
+
+        self.rules = {}
+        self.num_rules = 0
+
+        self.words_processed = 0
+        self.words_skipped = 0
 
 
     def report(self, limit=100):
 
         self.parse_list()
 
+        #for chartype in self.rules:
+        sorted_rules = list(self.rules.items())
+        sorted_rules.sort(key=lambda x: x[1], reverse=True)
+
+        display_count = 0
+        display_len = 0
+        for rule in sorted_rules[:limit]:
+            display_count += rule[1]
+            display_len += 1
+
+        try:
+            percent_displayed = (display_count / self.num_rules) * 100
+        except:
+            assert False, 'No rules to display.'
+
+        title_str = '\n\nTop {:,} Rules out of {:,} ({:.1f}% coverage)'.format(display_len, len(self.rules), percent_displayed)
+        print(title_str)
+        print('='*len(title_str))
+
+        for rule in sorted_rules[:display_len]:
+            rule_bytes, rule_count = rule
+
+            #b = '  {}:  "{}"'.format(str(rule_count), rule[0].replace(string_delim, b'__').decode())
+            if self.custom_digits:
+                rule_bytes = rule_bytes.replace(bytes(digit_delim), b'[digit]')
+
+            rule_coverage = (rule_count / self.num_rules) * 100
+                
+            print('{:>15,} ({:.1f}%):    {:<30}'.format(rule_count, rule_coverage, rule_bytes.replace(string_delim, b'[string]').decode()))
         print('\n')
-
-        for chartype in self.rules:
-            friendly = chartypes[chartype]
-            sorted_rules = list(self.rules[chartype].items())
-            sorted_rules.sort(key=lambda x: x[1], reverse=True)
-            num_rules = len(sorted_rules)
-
-            display_count = 0
-            display_len = 0
-            for rule in sorted_rules[:limit]:
-                display_count += rule[1]
-                display_len += 1
-
-            percent_displayed = (display_count / self.count[chartype]) * 100
-
-            title_str = 'Top {:,} {} out of {:,} ({:.1f}% coverage)'.format(display_len, friendly, num_rules, percent_displayed)
-            print(title_str)
-            print('='*len(title_str))
-
-            for rule in sorted_rules[:display_len]:
-                print('  ' + str(rule[1]) + ':  "{}"'.format(rule[0].replace(delimiter, b'__').decode()))
-            print('\n')
 
 
     def parse_list(self):
@@ -108,11 +109,20 @@ class RuleGen():
                 stderr.write('{:,} processed / {:,} skipped          \r'.format(self.words_processed, self.words_skipped))
             c += 1    
             groups = group_word(word, leet=self.leet)
-            self._get_rules(groups)
+            self.add(groups)
 
 
 
-    def _get_rules(self, groups):
+    def write_rules(self):
+
+        pass
+
+
+
+    def add(self, groups):
+        '''
+        takes & parses already-split word
+        '''
 
         try:
 
@@ -121,25 +131,59 @@ class RuleGen():
             self.words_processed += 1
 
             for index in range(num_groups):
-                if groups[index][0] == 4:
+                chartype = groups[index][0]
+                if chartype == 2 or chartype == 4:
                     continue
 
-                self.count[groups[index][0]] += 1
+                p1 = groups[:index]
+                p2 = groups[index+1:]
 
-                chartype = groups[index][0]
-                prepend = b''.join(g[1] for g in groups[:index])
-                append = b''.join(g[1] for g in groups[index+1:])
-                rule = prepend + delimiter + append
+                prepend = b''.join(g[1] for g in p1)
+                append = b''.join(g[1] for g in p2)
+                
+                if self.custom_digits:
 
-                try:
-                    self.rules[groups[index][0]][rule] += 1
-                except KeyError:
-                    self.rules[groups[index][0]][rule] = 1
+                    for p in range(len(p1)):
+                        if p1[p][0] == 2:
+                            new_prepend = list(p1)
+                            new_prepend[p] = (2, digit_delim)
+                            new_prepend = b''.join(g[1] for g in new_prepend)
+                            rule = new_prepend + string_delim + append
+                            self._add_rule(rule, digit=True)
+
+                    for a in range(len(p2)):
+                        if p2[a][0] == 2:
+                            new_append = list(p2)
+                            new_append[a] = (2, digit_delim)
+                            new_append = b''.join(g[1] for g in new_append)
+                            rule = prepend + string_delim + new_append
+                            self._add_rule(rule, digit=True)
+
+                else:
+
+                    rule = prepend + string_delim + append
+                    self._add_rule(rule)
 
         except AssertionError:
             self.words_skipped += 1
-            return None
 
+
+    def _add_rule(self, rule, digit=False):
+
+        if digit:
+            n = len(self.custom_digits)
+            self.num_rules += n
+            try:
+                self.rules[rule] += n
+            except KeyError:
+                self.rules[rule] = n
+                
+        else:
+            self.num_rules += 1
+            try:
+                self.rules[rule] += 1
+            except KeyError:
+                self.rules[rule] = 1
 
 
 
@@ -385,15 +429,12 @@ class Mutator():
 
 ### FUNCTIONS ###
 
+class Word():
 
-def join_bytes(j, b):
-    
-    joined = b''
-    for _ in b:
-        joined += bytes(_, 'utf-8')
-    return joined
-    #return j.join([bytes(_, 'utf-8') for _ in b])
+    def __init__(self, word, leet=True):
 
+        self.grouped = group_word(word)
+        self.charset = reduce( (lambda x,y: x|y), [g[0] for g in self.grouped] )
 
 
 def group_word(word, leet=True):
@@ -506,7 +547,7 @@ def _read_file(_f):
     with open(str(_f), 'rb') as f:
         for line in f:
             try:
-                assert not delimiter in line
+                assert not string_delim in line
                 yield line.strip(b'\r\n')
             except AssertionError:
                 continue
@@ -518,7 +559,7 @@ def _read_stdin():
         line = stdin.buffer.readline()
         if line:
             try:
-                assert not delimiter in line
+                assert not string_delim in line
                 yield line.strip(b'\r\n')
             except AssertionError:
                 continue
@@ -534,12 +575,13 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="FETCH THE PASSWORD STRETCHER")
 
     parser.add_argument('-w', '--wordlist',         type=_read_file,    default=_read_stdin(),  help="wordlist to mangle (default: STDIN)")
+    parser.add_argument('-d', '--digits',           type=_read_file,    default=[],             help="create rules using digits from this wordlist")
     parser.add_argument('-s', '--save',             type=Path,                                  help="save list analysis in this file")
     parser.add_argument('-r', '--report',           action='store_true',                        help="print report")
 
     parser.add_argument('-L',   '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
     parser.add_argument('-c',   '--capital',        action='store_true',                        help="common upper/lowercase variations")
-    parser.add_argument('-C',   '--capswap',        action='store_true',                        help="ll possible case combinations")
+    parser.add_argument('-C',   '--capswap',        action='store_true',                        help="all possible case combinations")
     #parser.add_argument('-P',   '--permutations',   type=int,           default=1,              help="Max times to combine words (careful! exponential)", metavar='INT')
 
 
@@ -551,10 +593,10 @@ if __name__ == '__main__':
         #m = Mutator(options.wordlist, leet=options.leet, cap=options.capital, capswap=options.capswap)
         #g = m.gen()
 
-        o = RuleGen(options.wordlist, leet=True)
+        o = RuleGen(options.wordlist, leet=True, custom_digits=options.digits)
         o.parse_list()
         if options.report:
-            o.report(limit=10)
+            o.report(limit=50)
 
         if options.save:
             with open(str(options.save), 'wb') as f:
@@ -565,7 +607,7 @@ if __name__ == '__main__':
         stderr.write("\n[!] Check your syntax. Use -h for help.\n")
         exit(2)
     except AssertionError as e:
-        stderr.write("[!] {}\n".format(str(e)))
+        stderr.write("\n[!] {}\n".format(str(e)))
         exit(1)
     except KeyboardInterrupt:
         stderr.write("\n[!] Program interrupted.\n")

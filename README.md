@@ -14,8 +14,8 @@ Still a work in progress.  In its current state, it only displays informative st
 		Analyzes wordlist and generates rules based on the treatment of strings and digits.
 		For example, "3Passwords!!" would generate two rules:
 		<ol>
-			<li>Prepend "3" and Append "!!"</li>
-			<li>Append "Passwords!!"</li>
+			<li>Prepend "3" and Append "!!" to all strings</li>
+			<li>Append "Passwords!!" to all digits</li>
 		</ol>
 	</li>
 	<li>Generates list of common strings &amp; digits</li>
