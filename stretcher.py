@@ -23,6 +23,7 @@ import itertools
 from time import sleep
 from pathlib import Path
 from functools import reduce
+from os import name as os_type
 from sys import exit, stdin, stderr
 from argparse import ArgumentParser, FileType, ArgumentError
 
@@ -48,16 +49,13 @@ class RuleGen():
     optionally generate hashcat rules and/or displays report
     '''
 
-    def __init__(self, in_list, leet=True, custom_digits=[]):
-        '''
-        in_list is iterable of already-grouped words
-        '''
+    def __init__(self, in_list=[], custom_digits=[]):
 
-        self.leet = leet
         self.custom_digits = list(custom_digits)
 
         self.rules = {}
         self.num_rules = 0
+        self.sorted_rules = []
 
         for word in Grouper(in_list).parse():
             self.add(word)
@@ -65,13 +63,11 @@ class RuleGen():
 
     def report(self, display_limit=50):
 
-        #for chartype in self.rules:
-        sorted_rules = list(self.rules.items())
-        sorted_rules.sort(key=lambda x: x[1], reverse=True)
+        self._sort()
 
         display_count = 0
         display_len = 0
-        for rule in sorted_rules[:display_limit]:
+        for rule in self.sorted_rules[:display_limit]:
             display_count += rule[1]
             display_len += 1
 
@@ -86,7 +82,7 @@ class RuleGen():
         report.append(title_str)
         report.append('='*len(title_str))
 
-        for rule in sorted_rules[:display_len]:
+        for rule in self.sorted_rules[:display_len]:
             rule_bytes, rule_count = rule
 
             #b = '  {}:  "{}"'.format(str(rule_count), rule[0].replace(string_delim, b'__').decode())
@@ -101,9 +97,63 @@ class RuleGen():
 
 
 
-    def write_rules(self):
+    def dump(self, word_list):
 
-        pass
+        self._sort()
+
+        print('')
+
+        for word in word_list:
+            for rule in self.sorted_rules:
+                rule = rule[0]
+                try:
+                    out_word = rule.replace(string_delim, word)
+                    if self.custom_digits and digit_delim in out_word:
+                        for digit in self.custom_digits:
+                                print( out_word.replace(digit_delim, digit).decode() )
+                    else:
+                        print( out_word.decode() )
+
+                except UnicodeDecodeError:
+                    continue
+
+
+    def write_rules(self, filename):
+        '''
+        writes hashcat rules
+        '''
+
+        self._sort()
+
+        with open(filename, 'w') as f:
+
+            for rule in self.sorted_rules:
+
+                if string_delim in rule[0]:
+                    if self.custom_digits and digit_delim in rule:
+                        for digit in self.custom_digits:
+                            self._write_rule(rule[0].replace(digit_delim, digit), f)
+                    else:
+                        self._write_rule(rule[0], f)
+
+
+    def _write_rule(self, rule, file):
+        '''
+        writes a single rule to an open file handle
+        '''
+
+        hc_rule = []
+
+        prepend,append = rule.split(string_delim)
+        if not (prepend or append):
+            return
+
+        for c in prepend:
+            hc_rule.append('^' + chr(c))
+        for c in append:
+            hc_rule.append('$' + chr(c))
+
+        file.write(' '.join(hc_rule) + '\n')
 
 
 
@@ -169,10 +219,20 @@ class RuleGen():
                 self.rules[rule] = 1
 
 
+    def _sort(self):
+
+        if not self.sorted_rules:
+            self.sorted_rules = list(self.rules.items())
+            self.sorted_rules.sort(key=lambda x: x[1], reverse=True)
+            # clear dictionary to save memory
+            self.rules = {}
+
+
+
 
 class ListGen():
 
-    def __init__(self, in_list, digits=False):
+    def __init__(self, in_list=[], digits=False):
         '''
         accepts iterable of words from which to generate list
         of individual strings and/or digits
@@ -182,41 +242,47 @@ class ListGen():
         # 1 = strings
         # 2 = digits
         # string/digit instances are stored in dictionary in the format: {occurence:count, ... }
-        self.lists      = {
+        self.lists = {
             # chartype  list
             1:  {},
             2:  {}
         }
 
-        self.totals     = {
+        self.totals = {
             1: 0,
             2: 0
         }
 
         self.chartypes = {
             1: 'words',
+            2: 'digits'
         }
-        if digits:
-            self.chartypes[2] = 'digits'
 
-        self.in_list    = in_list
-        self.digits     = digits
+        self.in_list        = in_list
+        self.digits         = digits
+        self.sorted_words   = {1: [], 2: []}
 
         for word in Grouper(in_list).parse():
             self.add(word)
 
 
-    def report(self, display_limit=50, write=''):
+    def report(self, display_limit=50):
+        '''
+        returns (but does not print) report
+        '''
 
         report = []
 
+        self._sort()
+
         for chartype in self.chartypes:
-            sorted_words = list(self.lists[chartype].items())
-            sorted_words.sort(key=lambda x: x[1], reverse=True)
+
+            if not self.sorted_words[chartype]:
+                continue
 
             display_count = 0
             display_len = 0
-            for word in sorted_words[:display_limit]:
+            for word in self.sorted_words[chartype][:display_limit]:
                 display_count += word[1]
                 display_len += 1
 
@@ -229,24 +295,32 @@ class ListGen():
             report.append(title_str)
             report.append('='*len(title_str))
 
-            for word in sorted_words[:display_len]:
+            for word in self.sorted_words[chartype][:display_len]:
                 string, count = word
 
                 occurance = (count / self.totals[chartype]) * 100
                     
                 report.append('{:>15,} ({:.1f}%):    {:<30}'.format(count, occurance, string.decode()))
 
-            if write:
-                self.write(sorted_words, write, '_{}'.format(self.chartypes[chartype]))
 
         return '\n'.join(report) + '\n'
 
 
-    def write(self, sorted_list, filename, suffix):
+    def write(self, filename, digits=False):
 
-        with open(str(filename) + suffix, 'wb') as f:
-            for word in sorted_list:
-                f.write(word[0] + b'\n')
+        self._sort()
+
+        filenames = {}
+        
+        for chartype in self.sorted_words:
+            if (chartype == 2 and not digits): continue
+            list_filename = str(filename) + '_' + self.chartypes[chartype]
+            filenames[chartype] = list_filename
+            with open(list_filename, 'wb') as f:
+                for word in self.sorted_words[chartype]:
+                    f.write(word[0] + b'\n')
+
+        return filenames
 
 
     def add(self, word):
@@ -260,6 +334,17 @@ class ListGen():
             except KeyError:
                 self.lists[chartype][string] = 1
             self.totals[chartype] += 1
+
+
+    def _sort(self):
+
+        for chartype in self.sorted_words:
+            if not self.sorted_words[chartype]:
+                self.sorted_words[chartype] = list(self.lists[chartype].items())
+                self.sorted_words[chartype].sort(key=lambda x: x[1], reverse=True)
+
+            # clear dictionary to save memory
+            self.lists[chartype] = {}
 
 
 
@@ -337,7 +422,7 @@ class Mutator():
 
         if self.perm_depth > 1:
 
-            words = list(in_list)
+            words = [ w[0] for w in in_list ]
             
             for d in range(1, self.perm_depth+1):
                 if repeat:
@@ -349,7 +434,7 @@ class Mutator():
                         yield b''.join(p)
         else:
             for word in in_list:
-                yield word
+                yield word[0]
 
 
     def cap(self, in_list):
@@ -524,7 +609,7 @@ class Grouper():
 
         for word in self.in_list:
             if self.progress == True and self.processed % 1000 == 0:
-                stderr.write('{:,} words processed      \r'.format(self.processed))
+                stderr.write('  {:,} words processed  \r'.format(self.processed))
             yield self.group_word(word)
             self.processed += 1 
 
@@ -632,7 +717,7 @@ class Grouper():
 
 
 
-class ReadWords():
+class ReadFile():
 
     def __init__(self, filename):
 
@@ -654,33 +739,102 @@ class ReadWords():
 
 class ReadSTDIN():
 
-    def __init__(self):
-
-        self.wordlist = []
-
-
     def read(self):
 
-        if not self.wordlist:
-            while 1:
-                line = stdin.buffer.readline()
-                if line:
-                    try:
-                        assert not string_delim in line
-                        self.wordlist.append(line.strip(b'\r\n'))
-                    except AssertionError:
-                        continue
-                else:
-                    break
-
-        return self.wordlist
+        while 1:
+            line = stdin.buffer.readline()
+            if line:
+                try:
+                    assert not string_delim in line
+                    yield line.strip(b'\r\n')
+                except AssertionError:
+                    continue
+            else:
+                break
 
 
 
-def read_digits(s):
+### FUNCTIONS ###
+
+
+def stretcher(options):
+
+    # hashcat settings
+    if 'ix' in os_type:
+        posix       = True
+        hc_binary   = 'hashcat'
+        shebang     = '#!/bin/bash'
+        file_ext    = '.sh'
+        var_prefix  = '$'
+        line_ending = '\n'
+    else:
+        posix       = False
+        hc_binary   = 'hashcat64.exe'
+        shebang     = ''
+        file_ext    = '.bat'
+        var_prefix  = '%'
+        line_ending = '\r\n'
+
+    # create words / rules objects
+    words = ListGen(digits=(True if options.digits else False))
+    rules = RuleGen(custom_digits=options.digits)
+
+    # parse input
+    for word in Grouper(options.wordlist.read()).parse():
+        words.add(word)
+        rules.add(word)
+
+    # print reports
+    if options.report:
+        print(words.report())
+        print(rules.report())
+
+    # set up common strings with optional mutations
+    # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
+    words._sort()
+    m = Mutator(words.sorted_words[1], perm=0, leet=options.leet, cap=options.capital, capswap=options.capswap).gen()
+
+    # hashcat stuff
+    if options.hashcat:
+
+        options.hashcat.mkdir(parents=True, exist_ok=True)
+
+        # filenames
+        listname = str(options.hashcat / 'wordlist')
+        rulename = str(options.hashcat / 'rules')
+        scriptname = str(options.hashcat / 'hashcat{}'.format(file_ext))
+
+        # write hashcat wordlist
+        with open(listname, 'w') as f:
+            for word in m:
+                try:
+                    f.write(word.decode() + '\n')
+                except UnicodeDecodeError:
+                    continue
+
+        # write hashcat rules
+        rules.write_rules(rulename)
+
+        # write hashcat script
+        with open(scriptname, 'w') as f:
+
+            f.write(shebang + line_ending)
+            cmd = [hc_binary, '-w', '1', '-a', '0', '-r', rulename, '"{}1"'.format(var_prefix), listname]
+            f.write(' '.join(cmd) + line_ending)
+
+        if posix:
+            Path(scriptname).chmod(0o755)
+
+    # or just write to stdout
+    elif not options.report:
+        rules.dump(m)
+
+
+
+def read_file_or_str(s):
 
     try:
-        digits = ReadWords(s).read()
+        digits = ReadFile(s).read()
     except AssertionError:
         digits = [d.encode() for d in s.split(',')]
 
@@ -695,10 +849,14 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description="FETCH THE PASSWORD STRETCHER")
 
-    parser.add_argument('-w', '--wordlist',         type=ReadWords,   default=ReadSTDIN(),      help="wordlist to mangle (default: STDIN)")
-    parser.add_argument('-d', '--digits',           type=read_digits, default=[],               help="create rules using these digits")
+    parser.add_argument('-w', '--wordlist',         type=ReadFile,    default=ReadSTDIN(),      help="wordlist to mangle (default: STDIN)")
     parser.add_argument('-s', '--save',             type=Path,                                  help="save individual strings/digits in this file")
     parser.add_argument('-r', '--report',           action='store_true',                        help="print report")
+
+    parser.add_argument('-hc', '--hashcat',         type=Path,                                  help="create hashcat script in this folder")
+
+    parser.add_argument('--strings',                type=read_file_or_str, default=[],          help="generate passwords using these strings instead")
+    parser.add_argument('-d', '--digits',           type=read_file_or_str, default=[],          help="generate passwords using these digits instead")
 
     parser.add_argument('-L',   '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
     parser.add_argument('-c',   '--capital',        action='store_true',                        help="common upper/lowercase variations")
@@ -710,16 +868,22 @@ if __name__ == '__main__':
 
         options = parser.parse_args()
 
+        stretcher(options)
+
+        '''
+
         # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
-        #m = Mutator(options.wordlist, leet=options.leet, cap=options.capital, capswap=options.capswap)
-        #g = m.gen()
+        g = Mutator(options.wordlist, leet=options.leet, cap=options.capital, capswap=options.capswap).gen()
 
         l = ListGen(options.wordlist.read(), digits=(True if options.digits else False))
         r = RuleGen(options.wordlist.read(), custom_digits=options.digits)
 
         if options.report:
-            print(l.report(10, options.save))
+            print(l.report(10))
             print(r.report(10))
+        if options.save:
+            l.write(options.save)
+        '''
 
 
 
