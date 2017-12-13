@@ -28,34 +28,35 @@ Still a work in progress.  In its current state, it only displays informative st
 ### Basic usage:
 ~~~~
 cat wordlist | ./stretcher.py --report
-184,000 words processed      
+99,000 words processed      
 
-Top 10 Words out of 129,569 (2.9% coverage)
-=============================================
-            875 (0.5%):    a                             
-            597 (0.3%):    b                             
-            544 (0.3%):    c                             
-            544 (0.3%):    d                             
-            486 (0.3%):    k                             
-            438 (0.2%):    e                             
-            433 (0.2%):    f                             
-            426 (0.2%):    phpbb                         
-            363 (0.2%):    m                             
-            345 (0.2%):    s                             
+Top 10 Words out of 74,946 (1.0% coverage)
+============================================
+            117 (0.1%):    dragon                        
+            115 (0.1%):    qwerty                        
+            110 (0.1%):    password                      
+             97 (0.1%):    a                             
+             89 (0.1%):    love                          
+             85 (0.1%):    monkey                        
+             83 (0.1%):    shadow                        
+             80 (0.1%):    alex                          
+             78 (0.1%):    daniel                        
+             76 (0.1%):    thomas                        
 
 
-Top 10 Rules out of 37,537 (16.1% coverage)
-=============================================
-          5,304 (6.1%):    [string]1                     
-          1,936 (2.2%):    [string]123                   
-          1,432 (1.6%):    [string]2                     
-            993 (1.1%):    [string]12                    
-            868 (1.0%):    [string]3                     
-            788 (0.9%):    [string]01                    
-            719 (0.8%):    [string]7                     
-            707 (0.8%):    [string]99                    
-            648 (0.7%):    [string]5                     
-            638 (0.7%):    [string]11
+
+Top 10 Rules out of 1,768 (56.8% coverage)
+============================================
+          5,562 (24.6%):    [string]1                     
+          2,816 (12.5%):    [string]123                   
+          1,057 (4.7%):    [string]12                    
+            811 (3.6%):    [string]2                     
+            544 (2.4%):    [string]11                    
+            487 (2.2%):    [string]01                    
+            469 (2.1%):    [string]1234                  
+            374 (1.7%):    [string]7                     
+            353 (1.6%):    [string]3                     
+            352 (1.6%):    [string]13
 ~~~~
 
 <br>
