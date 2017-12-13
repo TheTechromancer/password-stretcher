@@ -1,5 +1,4 @@
 # password_stretcher
-### PASSWORDS, NED!  IN AN OPEN FIEEEELD!!
 
 A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
 
@@ -12,10 +11,10 @@ Still a work in progress.  In its current state, it only displays informative st
 <ol>
 	<li>
 		Analyzes wordlist and generates rules based on the treatment of strings and digits.
-		For example, "3Passwords!!" would generate two rules:
+		For example, "Pass00word!!" would generate two rules:
 		<ol>
-			<li>Prepend "3" and Append "!!" to all strings</li>
-			<li>Append "Passwords!!" to all digits</li>
+			<li>Append "00word!!"/li>
+			<li>Prepend "Pass00" and append "!!"</li>
 		</ol>
 	</li>
 	<li>Generates list of common strings &amp; digits</li>
@@ -29,34 +28,35 @@ Still a work in progress.  In its current state, it only displays informative st
 ### Basic usage:
 ~~~~
 cat wordlist | ./stretcher.py --report
-19,297 processed / 70,702 skipped          
+99,000 words processed      
 
-Top 10 string mutations out of 1,490 (57.8% coverage)
-=====================================================
-  5326:  "__1"
-  2698:  "__123"
-  993:  "__12"
-  761:  "__2"
-  505:  "__11"
-  451:  "__1234"
-  449:  "__01"
-  352:  "__7"
-  323:  "__13"
-  322:  "__3"
+Top 10 Words out of 74,946 (1.0% coverage)
+============================================
+            117 (0.1%):    dragon                        
+            115 (0.1%):    qwerty                        
+            110 (0.1%):    password                      
+             97 (0.1%):    a                             
+             89 (0.1%):    love                          
+             85 (0.1%):    monkey                        
+             83 (0.1%):    shadow                        
+             80 (0.1%):    alex                          
+             78 (0.1%):    daniel                        
+             76 (0.1%):    thomas                        
 
 
-Top 10 digit mutations out of 8,446 (3.9% coverage)
-===================================================
-  114:  "dragon__"
-  102:  "qwerty__"
-  96:  "password__"
-  79:  "monkey__"
-  78:  "alex__"
-  76:  "daniel__"
-  70:  "shadow__"
-  70:  "killer__"
-  68:  "love__"
-  68:  "thomas__"
+
+Top 10 Rules out of 1,768 (56.8% coverage)
+============================================
+          5,562 (24.6%):    [string]1                     
+          2,816 (12.5%):    [string]123                   
+          1,057 (4.7%):    [string]12                    
+            811 (3.6%):    [string]2                     
+            544 (2.4%):    [string]11                    
+            487 (2.2%):    [string]01                    
+            469 (2.1%):    [string]1234                  
+            374 (1.7%):    [string]7                     
+            353 (1.6%):    [string]3                     
+            352 (1.6%):    [string]13
 ~~~~
 
 <br>
