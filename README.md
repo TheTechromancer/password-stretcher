@@ -28,34 +28,34 @@ Still a work in progress.  In its current state, it only displays informative st
 ### Basic usage:
 ~~~~
 cat wordlist | ./stretcher.py --report
-19,297 processed / 70,702 skipped          
+184,000 words processed      
 
-Top 10 string mutations out of 1,490 (57.8% coverage)
-=====================================================
-  5326:  "__1"
-  2698:  "__123"
-  993:  "__12"
-  761:  "__2"
-  505:  "__11"
-  451:  "__1234"
-  449:  "__01"
-  352:  "__7"
-  323:  "__13"
-  322:  "__3"
+Top 10 Words out of 129,569 (2.9% coverage)
+=============================================
+            875 (0.5%):    a                             
+            597 (0.3%):    b                             
+            544 (0.3%):    c                             
+            544 (0.3%):    d                             
+            486 (0.3%):    k                             
+            438 (0.2%):    e                             
+            433 (0.2%):    f                             
+            426 (0.2%):    phpbb                         
+            363 (0.2%):    m                             
+            345 (0.2%):    s                             
 
 
-Top 10 digit mutations out of 8,446 (3.9% coverage)
-===================================================
-  114:  "dragon__"
-  102:  "qwerty__"
-  96:  "password__"
-  79:  "monkey__"
-  78:  "alex__"
-  76:  "daniel__"
-  70:  "shadow__"
-  70:  "killer__"
-  68:  "love__"
-  68:  "thomas__"
+Top 10 Rules out of 37,537 (16.1% coverage)
+=============================================
+          5,304 (6.1%):    [string]1                     
+          1,936 (2.2%):    [string]123                   
+          1,432 (1.6%):    [string]2                     
+            993 (1.1%):    [string]12                    
+            868 (1.0%):    [string]3                     
+            788 (0.9%):    [string]01                    
+            719 (0.8%):    [string]7                     
+            707 (0.8%):    [string]99                    
+            648 (0.7%):    [string]5                     
+            638 (0.7%):    [string]11
 ~~~~
 
 <br>
