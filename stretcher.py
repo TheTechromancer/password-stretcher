@@ -78,7 +78,7 @@ class RuleGen():
 
         report = []
 
-        title_str = '\n\nTop {:,} Rules out of {:,} ({:.1f}% coverage)'.format(display_len, len(self.rules), percent_displayed)
+        title_str = '\n\nTop {:,} Rules out of {:,} ({:.1f}% coverage)'.format(display_len, len(self.sorted_rules), percent_displayed)
         report.append(title_str)
         report.append('='*len(title_str))
 
@@ -291,7 +291,7 @@ class ListGen():
             except:
                 report.append('\nNo {} to display.\n'.format(self.chartypes[chartype]))
 
-            title_str = '\n\nTop {:,} {} out of {:,} ({:.1f}% coverage)'.format(display_len, self.chartypes[chartype].capitalize(), len(self.lists[chartype]), percent_displayed)
+            title_str = '\n\nTop {:,} {} out of {:,} ({:.1f}% coverage)'.format(display_len, self.chartypes[chartype].capitalize(), len(self.sorted_words[chartype]), percent_displayed)
             report.append(title_str)
             report.append('='*len(title_str))
 
@@ -779,15 +779,20 @@ def stretcher(options):
     words = ListGen(digits=(True if options.digits else False))
     rules = RuleGen(custom_digits=options.digits)
 
-    # parse input
-    for word in Grouper(options.wordlist.read()).parse():
-        words.add(word)
-        rules.add(word)
+    try:
+        # parse input
+        for word in Grouper(options.wordlist.read()).parse():
+            words.add(word)
+            rules.add(word)
+    except KeyboardInterrupt:
+        pass
 
     # print reports
     if options.report:
         print(words.report())
         print(rules.report())
+        total_possible = len(words.sorted_words[1]) * len(rules.sorted_rules)
+        print('Total possible combinations: {:,}'.format(total_possible))
 
     # set up common strings with optional mutations
     # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
