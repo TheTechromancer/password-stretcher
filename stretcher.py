@@ -661,10 +661,7 @@ class ReadSTDIN():
 
     def read(self):
 
-        if self.wordlist:
-            return self.wordlist
-
-        else:
+        if not self.wordlist:
             while 1:
                 line = stdin.buffer.readline()
                 if line:
@@ -675,6 +672,8 @@ class ReadSTDIN():
                         continue
                 else:
                     break
+
+        return self.wordlist
 
 
 
@@ -715,12 +714,12 @@ if __name__ == '__main__':
         #m = Mutator(options.wordlist, leet=options.leet, cap=options.capital, capswap=options.capswap)
         #g = m.gen()
 
-        l = ListGen(options.wordlist.read(), digits=True)
+        l = ListGen(options.wordlist.read(), digits=(True if options.digits else False))
         r = RuleGen(options.wordlist.read(), custom_digits=options.digits)
 
         if options.report:
-            print(l.report(report_limit, options.save))
-            print(r.report(report_limit))
+            print(l.report(10, options.save))
+            print(r.report(10))
 
 
 
