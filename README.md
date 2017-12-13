@@ -1,5 +1,4 @@
 # password_stretcher
-### PASSWORDS, NED!  IN AN OPEN FIEEEELD!!
 
 A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
 
