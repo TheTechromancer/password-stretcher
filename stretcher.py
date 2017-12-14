@@ -110,7 +110,7 @@ class RuleGen():
                     out_word = rule.replace(string_delim, word)
                     if self.custom_digits and digit_delim in out_word:
                         for digit in self.custom_digits:
-                                print( out_word.replace(digit_delim, digit).decode() )
+                            print( out_word.replace(digit_delim, digit).decode() )
                     else:
                         print( out_word.decode() )
 
@@ -130,7 +130,7 @@ class RuleGen():
             for rule in self.sorted_rules:
 
                 if string_delim in rule[0]:
-                    if self.custom_digits and digit_delim in rule:
+                    if self.custom_digits and digit_delim in rule[0]:
                         for digit in self.custom_digits:
                             self._write_rule(rule[0].replace(digit_delim, digit), f)
                     else:
@@ -872,24 +872,7 @@ if __name__ == '__main__':
     try:
 
         options = parser.parse_args()
-
         stretcher(options)
-
-        '''
-
-        # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
-        g = Mutator(options.wordlist, leet=options.leet, cap=options.capital, capswap=options.capswap).gen()
-
-        l = ListGen(options.wordlist.read(), digits=(True if options.digits else False))
-        r = RuleGen(options.wordlist.read(), custom_digits=options.digits)
-
-        if options.report:
-            print(l.report(10))
-            print(r.report(10))
-        if options.save:
-            l.write(options.save)
-        '''
-
 
 
     except ArgumentError:
