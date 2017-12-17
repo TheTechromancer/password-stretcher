@@ -49,8 +49,9 @@ class RuleGen():
     optionally generate hashcat rules and/or displays report
     '''
 
-    def __init__(self, in_list=[], custom_digits=[]):
+    def __init__(self, in_list=[], cap=False, custom_digits=[]):
 
+        self.cap = cap
         self.custom_digits = list(custom_digits)
 
         self.rules = {}
@@ -203,20 +204,33 @@ class RuleGen():
 
     def _add_rule(self, rule, digit=False):
 
-        if digit:
-            n = len(self.custom_digits)
-            self.num_rules += n
-            try:
-                self.rules[rule] += n
-            except KeyError:
-                self.rules[rule] = n
-                
+        if self.cap:
+            rules = Mutator([rule], cap=True).gen()
         else:
-            self.num_rules += 1
-            try:
-                self.rules[rule] += 1
-            except KeyError:
-                self.rules[rule] = 1
+            rules = [rule]
+
+        c = 0
+        for rule in rules:
+            if digit:
+                n = len(self.custom_digits)
+                self.num_rules += n
+                try:
+                    self.rules[rule] += n
+                except KeyError:
+                    self.rules[rule] = n
+                    
+            else:
+                self.num_rules += 1
+                try:
+                    self.rules[rule] += 1
+                except KeyError:
+                    self.rules[rule] = 1
+
+                # Add a mutated rule, but don't increment its counter
+                if self.cap and c != 0:
+                    self.rules[rule] -= 1
+
+            c += 1
 
 
     def _sort(self):
@@ -350,7 +364,7 @@ class ListGen():
 
 class Mutator():
 
-    def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
+    def __init__(self, in_list, perm=0, leet=False, cap=False, capswap=False, grouped=False):
 
         # "leet" character swaps - modify as needed.
         # Keys are replaceable characters; values are their leet replacements.
@@ -401,6 +415,9 @@ class Mutator():
         self.do_capswap     = capswap
         self.do_cap         = cap or capswap
 
+        # whether or not the words have been grouped
+        self.grouped        = grouped
+
 
     def gen(self):
         '''
@@ -422,7 +439,10 @@ class Mutator():
 
         if self.perm_depth > 1:
 
-            words = [ w[0] for w in in_list ]
+            if self.grouped:
+                words = [ w[0] for w in in_list ]
+            else:
+                words = [w for w in in_list ]
             
             for d in range(1, self.perm_depth+1):
                 if repeat:
@@ -434,7 +454,10 @@ class Mutator():
                         yield b''.join(p)
         else:
             for word in in_list:
-                yield word[0]
+                if self.grouped:
+                    yield word[0]
+                else:
+                    yield word
 
 
     def cap(self, in_list):
@@ -515,7 +538,6 @@ class Mutator():
         if self.do_capswap:
 
             # oneliner which basically does it all
-            # TODO: change to emulate leet function with common and less common caps
             for r in map(bytes, itertools.product(*zip(word.lower(), word.upper()))):
                 if not r in results:
                     results.append(r)
@@ -763,21 +785,15 @@ def stretcher(options):
     if 'ix' in os_type:
         posix       = True
         hc_binary   = 'hashcat'
-        shebang     = '#!/bin/bash'
-        file_ext    = '.sh'
-        var_prefix  = '$'
         line_ending = '\n'
     else:
         posix       = False
         hc_binary   = 'hashcat64.exe'
-        shebang     = ''
-        file_ext    = '.bat'
-        var_prefix  = '%'
         line_ending = '\r\n'
 
     # create words / rules objects
     words = ListGen(digits=(True if options.digits else False))
-    rules = RuleGen(custom_digits=options.digits)
+    rules = RuleGen(cap=options.capital, custom_digits=options.digits)
 
     try:
         # parse input
@@ -797,7 +813,7 @@ def stretcher(options):
     # set up common strings with optional mutations
     # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
     words._sort()
-    m = Mutator(words.sorted_words[1], perm=0, leet=options.leet, cap=options.capital, capswap=options.capswap).gen()
+    m = Mutator(words.sorted_words[1], perm=0, leet=options.leet, cap=options.capital, capswap=options.capswap, grouped=True).gen()
 
     # hashcat stuff
     if options.hashcat:
@@ -807,7 +823,7 @@ def stretcher(options):
         # filenames
         listname = str(options.hashcat / 'wordlist')
         rulename = str(options.hashcat / 'rules')
-        scriptname = str(options.hashcat / 'hashcat{}'.format(file_ext))
+        scriptname = str(options.hashcat / 'hashcat.py')
 
         # write hashcat wordlist
         with open(listname, 'w') as f:
@@ -823,9 +839,26 @@ def stretcher(options):
         # write hashcat script
         with open(scriptname, 'w') as f:
 
-            f.write(shebang + line_ending)
-            cmd = [hc_binary, '-w', '1', '-a', '0', '-r', rulename, '"{}1"'.format(var_prefix), listname]
-            f.write(' '.join(cmd) + line_ending)
+            def_opts = [ '"{}"'.format(o) for o in ['-w', '1', '-a', '0', '-r', rulename] ]
+
+            _help = ' Usage: {} [hashcat_opts] -m <hashtype> <hashfile>'.format(scriptname)
+
+            lines = [
+                '#!/usr/bin/env python3',
+                'from sys import argv',
+                'from subprocess import run',
+                'if len(argv) < 2 or any(a.startswith("-h") for a in argv) or any(a.startswith("--help") for a in argv):',
+                '    print(" Usage: {} [hashcat_opts] -m <hashtype> <hashfile>".format(argv[0]))',
+                '    exit(2)',
+                'hc_opts = argv[1:-1]',
+                'hashfile = argv[-1]',
+                'cmd = ["{}"] + hc_opts + [{}] + [hashfile] + ["{}"]'.format(hc_binary, ','.join(def_opts), listname),
+                'print("[+] " + " ".join(cmd) )',
+                'run(cmd)'
+            ]
+
+            f.write(line_ending.join(lines))
+
 
         if posix:
             Path(scriptname).chmod(0o755)
