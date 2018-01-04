@@ -138,26 +138,6 @@ class RuleGen():
                         self._write_rule(rule[0], f)
 
 
-    def _write_rule(self, rule, file):
-        '''
-        writes a single rule to an open file handle
-        '''
-
-        hc_rule = []
-
-        prepend,append = rule.split(string_delim)
-        if not (prepend or append):
-            return
-
-        for c in prepend:
-            hc_rule.append('^' + chr(c))
-        for c in append:
-            hc_rule.append('$' + chr(c))
-
-        file.write(' '.join(hc_rule) + '\n')
-
-
-
     def add(self, groups):
         '''
         takes & parses already-split word
@@ -233,6 +213,25 @@ class RuleGen():
             c += 1
 
 
+    def _write_rule(self, rule, file):
+        '''
+        writes a single rule to an open file handle
+        '''
+
+        hc_rule = []
+
+        prepend,append = rule.split(string_delim)
+        if not (prepend or append):
+            return
+
+        for c in prepend:
+            hc_rule.append('^' + chr(c))
+        for c in append:
+            hc_rule.append('$' + chr(c))
+
+        file.write(' '.join(hc_rule) + '\n')
+
+
     def _sort(self):
 
         if not self.sorted_rules:
@@ -244,13 +243,18 @@ class RuleGen():
 
 
 
-class ListGen():
+class WordGen():
 
-    def __init__(self, in_list=[], digits=False):
+    def __init__(self, in_list=[], digits=False, cap=False, capswap=False, leet=False):
         '''
         accepts iterable of words from which to generate list
         of individual strings and/or digits
         '''
+
+        self.cap        = cap
+        self.capswap    = capswap
+        self.leet       = leet
+        self.mutate     = (cap or capswap or leet)
         
         # dictionary to hold common string/digit occurences
         # 1 = strings
@@ -337,17 +341,32 @@ class ListGen():
         return filenames
 
 
-    def add(self, word):
+    def add(self, grouped):
 
-        for group in word:
+        for group in grouped:
             chartype, string = group
             if chartype == 4 or (chartype == 2 and not self.digits):
                 continue
-            try:
-                self.lists[chartype][string] += 1
-            except KeyError:
-                self.lists[chartype][string] = 1
-            self.totals[chartype] += 1
+
+            if self.mutate:
+                words = Mutator([string], cap=self.cap, capswap=self.capswap, leet=self.leet).gen()
+            else:
+                words = [string]
+
+            c = 0
+            for word in words:
+                try:
+                    self.lists[chartype][word] += 1
+                except KeyError:
+                    self.lists[chartype][word] = 1
+                self.totals[chartype] += 1
+
+                # only count first (non-mutated) occurrence
+                if self.mutate and c != 0:
+                    self.lists[chartype][word] -= 1
+                    self.totals[chartype] -= 1
+
+                c += 1
 
 
     def _sort(self):
@@ -630,7 +649,7 @@ class Grouper():
         '''
 
         for word in self.in_list:
-            if self.progress == True and self.processed % 1000 == 0:
+            if self.progress == True and self.processed % 100 == 0:
                 stderr.write('  {:,} words processed  \r'.format(self.processed))
             yield self.group_word(word)
             self.processed += 1 
@@ -785,21 +804,20 @@ def stretcher(options):
     if 'ix' in os_type:
         posix       = True
         hc_binary   = 'hashcat'
-        line_ending = '\n'
     else:
         posix       = False
         hc_binary   = 'hashcat64.exe'
-        line_ending = '\r\n'
 
     # create words / rules objects
-    words = ListGen(digits=(True if options.digits else False))
-    rules = RuleGen(cap=options.capital, custom_digits=options.digits)
+    words = WordGen(digits=(True if options.digits else False), cap=options.cap, capswap=options.capswap, leet=options.leet)
+    rules = RuleGen(cap=options.cap, custom_digits=options.digits)
 
     try:
         # parse input
         for word in Grouper(options.wordlist.read()).parse():
             words.add(word)
-            rules.add(word)
+            if not options.no_rules:
+                rules.add(word)
     except KeyboardInterrupt:
         pass
 
@@ -813,10 +831,15 @@ def stretcher(options):
     # set up common strings with optional mutations
     # def __init__(self, in_list, perm=0, leet=True, cap=True, capswap=True):
     words._sort()
-    m = Mutator(words.sorted_words[1], perm=0, leet=options.leet, cap=options.capital, capswap=options.capswap, grouped=True).gen()
+    s = words.sorted_words[1]
+    #m = Mutator(words.sorted_words[1], perm=0, leet=options.leet, cap=options.cap, capswap=options.capswap, grouped=True).gen()
+
+    if options.no_rules:
+        for word in s:
+            print(word[0].decode())
 
     # hashcat stuff
-    if options.hashcat:
+    elif options.hashcat:
 
         options.hashcat.mkdir(parents=True, exist_ok=True)
 
@@ -827,9 +850,10 @@ def stretcher(options):
 
         # write hashcat wordlist
         with open(listname, 'w') as f:
-            for word in m:
+            #for word in m:
+            for word in s:
                 try:
-                    f.write(word.decode() + '\n')
+                    f.write(word[0].decode() + '\n')
                 except UnicodeDecodeError:
                     continue
 
@@ -857,7 +881,7 @@ def stretcher(options):
                 'run(cmd)'
             ]
 
-            f.write(line_ending.join(lines))
+            f.write('\n'.join(lines))
 
 
         if posix:
@@ -865,7 +889,7 @@ def stretcher(options):
 
     # or just write to stdout
     elif not options.report:
-        rules.dump(m)
+        rules.dump(s)
 
 
 
@@ -887,17 +911,19 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description="FETCH THE PASSWORD STRETCHER")
 
-    parser.add_argument('-w', '--wordlist',         type=ReadFile,    default=ReadSTDIN(),      help="wordlist to mangle (default: STDIN)")
-    parser.add_argument('-s', '--save',             type=Path,                                  help="save individual strings/digits in this file")
+    parser.add_argument('-w', '--wordlist',         type=ReadFile,    default=ReadSTDIN(),      help="wordlist to mangle (default: STDIN)", metavar='LIST')
+    parser.add_argument('-s', '--save',             type=Path,                                  help="save individual strings/digits in this file", metavar='FILE')
     parser.add_argument('-r', '--report',           action='store_true',                        help="print report")
 
-    parser.add_argument('-hc', '--hashcat',         type=Path,                                  help="create hashcat script in this folder")
+    parser.add_argument('-n', '--no-rules',         action='store_true',                        help="mangle only - no appending/prepending")
+
+    parser.add_argument('-hc', '--hashcat',         type=Path,                                  help="create hashcat script in this folder", metavar='DIR')
 
     parser.add_argument('--strings',                type=read_file_or_str, default=[],          help="generate passwords using these strings instead")
     parser.add_argument('-d', '--digits',           type=read_file_or_str, default=[],          help="generate passwords using these digits instead")
 
     parser.add_argument('-L',   '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
-    parser.add_argument('-c',   '--capital',        action='store_true',                        help="common upper/lowercase variations")
+    parser.add_argument('-c',   '--cap',            action='store_true',                        help="common upper/lowercase variations")
     parser.add_argument('-C',   '--capswap',        action='store_true',                        help="all possible case combinations")
     #parser.add_argument('-P',   '--permutations',   type=int,           default=1,              help="Max times to combine words (careful! exponential)", metavar='INT')
 
