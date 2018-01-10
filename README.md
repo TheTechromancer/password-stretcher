@@ -98,8 +98,8 @@ Coverage by type:
     words:     93.5%
     rules:     93.5%
 
-[+] Hashcat resources written to /tmp/asdf
-[+] Please run: /tmp/asdf/hashcat.py -h
+[+] Hashcat resources written to /tmp/phpbb
+[+] Please run: /tmp/phpbb/hashcat.py -h
 ~~~
 
 <br>
