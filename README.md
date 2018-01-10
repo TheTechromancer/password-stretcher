@@ -25,7 +25,7 @@ A wordlist mangler which tries to avoid generating "improbable" passwords by pre
 
 ### Basic usage:
 ~~~
-$ cat phpbb.txt | ./stretcher.py --target-time 1 --hashcat /tmp/asdf
+$ cat phpbb.txt | ./stretcher.py --target-time 1 --hashcat /tmp/phpbb
 [+] 184,389 words processed  
 
 Top 25 Words out of 118,138 (4.9% coverage)
@@ -91,7 +91,7 @@ Words processed:             184,389
 Possible combinations:       4,665,650,121
 Timeframe target:            3,600,000,000
 Actual combinations:         3,600,019,274
-==========================================
+=============================================
 Overall coverage:            77.16%
 
 Coverage by type:
