@@ -38,6 +38,8 @@ report_limit    = 50            # maximum lines for each individual report
 string_delim    = b'\x00'       # unique unprintable placeholder for strings
 digit_delim     = b'\x01'       # unique unprintable placeholder for digits
 
+words_processed = 0             # number of inputs words processed
+
 
 
 ### CLASSES ###
@@ -708,6 +710,9 @@ class Grouper():
 
         stderr.write('[+] {:,} words processed  \r'.format(self.processed))
 
+        global words_processed
+        words_processed = self.processed
+
 
     def group_word(self, word):
 
@@ -1152,19 +1157,20 @@ def stretcher(options):
     if options.report or options.hashcat:
         print(words.report())
         print(rules.report())
-        print('\nTotal possible combinations:    {:,}'.format(total_possible))
+        print('\nWords processed:             {:,}'.format(words_processed))
+        print('Possible combinations:       {:,}'.format(total_possible))
         if options.target_time:
-            print('Max combinations for timeframe: {:,}'.format(total_desired))
-        print('Total actual combinations:      {:,}'.format(total_actual))
-        print('=======================================')
-        print('Overall coverage:               {:.2f}%'.format(total_actual / total_possible * 100))
+            print('Timeframe target:            {:,}'.format(total_desired))
+        print('Actual combinations:         {:,}'.format(total_actual))
+        print('=============================================')
+        print('Overall coverage:            {:.2f}%'.format(total_actual / total_possible * 100))
 
         if options.target_time:
             print('\nCoverage by type:')
             for k in list_stats:
                 #print(str(list_stats[k]))
                 if list_stats[k].current:
-                    print('    {}:              {:.1f}%'.format(k, list_stats[k].percent))
+                    print('    {}:     {:.1f}%'.format(k, list_stats[k].percent))
 
     # if we're using hashcat
     if options.hashcat:
