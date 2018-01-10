@@ -17,7 +17,7 @@ A wordlist mangler which tries to avoid generating "improbable" passwords by pre
 	</li>
 	<li>Generates list of common strings &amp; digits</li>
 	<li>Outputs passwords (or generates hashcat rules) based on combination of generated lists &amp; rules</li>
-	<li>Trims rules and words with lower occurences based on desired crack time (TODO)</li>
+	<li>Trims rules and words with lower occurences based on desired crack time</li>
 </ol>
 
 
