@@ -106,6 +106,7 @@ Coverage by type:
 
 #### Notes:
 <ul>
+  <li>I've made an effort to reduce duplicates in output.  A very small number of duplicates will occur with with use of leet or caps mutations, though.  Linux homies can simply | sort | uniq. ;)</li>
 	<li>When generating rules, overly simple and overly complex words are skipped.  To be precise, words with only one character type (such as "iloveyou") or a complex mask (such as "a1!b2@c3#d4$")</li>
 	<li>Lots of RAM helps.  Be prepared for memory usage around six times the size of your input wordlist (rockyou peaks at approximately 1GB)</li>
 </ul>
