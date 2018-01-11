@@ -1,6 +1,7 @@
-# password_stretcher
+# stretcher.py
 
-A wordlist mangler which tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
+A highly customizable wordlist mangler which can be trained on an existing wordlist.
+It tries to avoid generating "improbable" passwords by preserving the natural entropy of its input.
 
 <br>
 
@@ -23,7 +24,34 @@ A wordlist mangler which tries to avoid generating "improbable" passwords by pre
 
 <br>
 
-### Basic usage:
+
+### Help:
+~~~
+$ ./stretcher.py --help
+usage: stretcher.py [-h] [-w] [-r] [-n] [-hc DIR] [-t] [-p] [-s] [-d] [-L]
+                    [-c] [-C]
+
+FETCH THE PASSWORD STRETCHER
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w , --wordlist       wordlist to analyze / stretch (default: STDIN)
+  -r, --report          print report
+  -n, --no-pend         mangle only - no appending/prepending
+  -hc DIR, --hashcat DIR
+                        create hashcat resources in this folder
+  -t , --target-time    desired maximum crack time in hours
+  -p , --pps            expected hashrate (packets per second)
+  -s , --strings        use these strings instead of those in the wordlist
+  -d , --digits         use these digits instead of those in the wordlist
+  -L, --leet            "leetspeak" mutations
+  -c, --cap             common upper/lowercase variations
+  -C, --capswap         all possible case combinations
+~~~
+
+<br>
+
+### Example:
 ~~~
 $ cat phpbb.txt | ./stretcher.py --target-time 1 --hashcat /tmp/phpbb
 [+] 184,389 words processed  
