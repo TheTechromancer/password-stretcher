@@ -1130,7 +1130,7 @@ def stretcher(options):
                 if l.current:
                     print('    {}:     {:>15.1f}% ({:,})'.format(l.friendly, l.percent, l.index))
 
-        print('Wordlist size:         {:>47}'.format(bytes_to_human(total_actual)))
+        print('Wordlist size:         {:>47}'.format(estimate_list_size(total_actual)))
         pps = '\nHours at {:,} pps:'.format(options.pps)
         hours = '{:.2f}'.format((total_actual / options.pps) / 3600)
         print(pps + ' '*(66-len(pps)+1-len(hours)) + hours + ' hrs')
@@ -1224,17 +1224,10 @@ def read_file_or_str(s):
         yield e
 
 
-def estimate_list_length(f):
-
-    f = Path(f)
-    size = f.stat().st_size
-
-    # 9.75 = average bytes per line (including newlines) in rockyou
-    return int(size / 9.75)
-
 
 def estimate_list_size(n):
 
+    # 9.75 = average bytes per line (including newlines) in rockyou
     return bytes_to_human(int(n * 9.75))
 
 
