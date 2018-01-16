@@ -192,6 +192,7 @@ class RuleGen():
                 prepend = b''.join(g[1] for g in p1)
                 append = b''.join(g[1] for g in p2)
                 
+                digit = False
                 if self.custom_digits:
 
                     for p in range(len(p1)):
@@ -200,7 +201,8 @@ class RuleGen():
                             new_prepend[p] = (2, digit_delim)
                             new_prepend = b''.join(g[1] for g in new_prepend)
                             rule = new_prepend + string_delim + append
-                            self._add_rule(rule, digit=True)
+                            self._add_rule(rule)
+                            digit = True
 
                     for a in range(len(p2)):
                         if p2[a][0] == 2:
@@ -208,15 +210,16 @@ class RuleGen():
                             new_append[a] = (2, digit_delim)
                             new_append = b''.join(g[1] for g in new_append)
                             rule = prepend + string_delim + new_append
-                            self._add_rule(rule, digit=True)
+                            self._add_rule(rule)
+                            digit = True
 
-                else:
-
+                # skip creating a rule if digits are enabled and a rule was already created
+                if not digit:
                     rule = prepend + string_delim + append
                     self._add_rule(rule)
 
 
-    def _add_rule(self, r, digit=False):
+    def _add_rule(self, r):
 
         rules = Mutator([r], cap=self.cap).gen()
 
