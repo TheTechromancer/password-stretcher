@@ -8,11 +8,8 @@ by TheTechromancer
 
 TODO:
 
-    if total_actual < total_desired:
-        apply multiplier to max_cap, max_leet
-
-    resolve how RuleGen handles digits
-    finish or rip out WordGen digits functionality
+    Ponder validity of empty rule ( [string] )
+    Take out, leave in, or only leave in if len(rules.sorted_rules) == 0?
 
 '''
 
@@ -24,7 +21,7 @@ from pathlib import Path
 from statistics import mean
 from functools import reduce
 from os import name as os_type
-from sys import argv, exit, stdin, stderr
+from sys import argv, exit, stdin, stderr, stdout
 from argparse import ArgumentParser, FileType, ArgumentError
 
 ### DEFAULTS ###
@@ -51,10 +48,10 @@ class RuleGen():
     optionally generate hashcat rules and/or displays report
     '''
 
-    def __init__(self, in_list=[], cap=False, custom_digits=[]):
+    def __init__(self, in_list=[], cap=False, custom_digits=False):
 
         self.cap            = cap
-        self.custom_digits  = list(custom_digits)
+        self.custom_digits  = custom_digits
 
         self.rules          = {}
         self.num_rules      = 0     # total not including duplicates
@@ -100,7 +97,7 @@ class RuleGen():
 
 
 
-    def dump(self, word_list, key=lambda x: x):
+    def dump(self, word_list, digit_list=[], d_key=lambda x: x, display_count=False):
         '''
         given wordlist, applies rules to each word and dumps to STDOUT
         '''
@@ -109,25 +106,34 @@ class RuleGen():
 
         self.sort()
 
+        _c = 0
         for word in word_list:
-
 
             c = 0
             for rule in self.sorted_rules:
+                if display_count and _c % 1000 == 0:
+                    stderr.write('\r[+] {:,} words written'.format(_c))
+
                 rule = rule[0]
 
                 try:
                     out_word = rule.replace(string_delim, word)
                     if self.custom_digits and digit_delim in out_word:
-                        for digit in self.custom_digits:
-                            print( out_word.replace(digit_delim, digit).decode() )
+                        for digit in digit_list:
+                            print( out_word.replace(digit_delim, d_key(digit)).decode() )
+                            _c += 1
                     else:
                         print( out_word.decode() )
+                        _c += 1
 
                     c += 1
 
                 except UnicodeDecodeError:
                     continue
+
+        if display_count:
+            stderr.write('\r[+] {:,} words written\n'.format(_c))
+
 
 
     def write_rules(self, filename):
@@ -316,7 +322,6 @@ class WordGen():
         self.in_list        = in_list
         self.digits         = digits
         self.sorted_words   = {1: [], 2: []}
-        #self.trimmed_words  = {1: [], 2: []}
 
         self.cap            = cap
         self.capswap        = capswap
@@ -385,20 +390,20 @@ class WordGen():
     def add(self, grouped):
 
         for group in grouped:
-            chartype, string = group
+            chartype, chunk = group
 
             if chartype == 4 or (chartype == 2 and not self.digits):
                 continue
 
-            if self.capswap:
-                strings = [string.lower()]
-            elif self.cap:
-                strings = [s for s in Mutator([string], cap=True).gen()]
-            else:
-                strings = [string]
+            chunks = [chunk]
+            if chartype == 1:
+                if self.capswap:
+                    chunks = [chunk.lower()]
+                elif self.cap:
+                    chunks = [s for s in Mutator([chunk], cap=True).gen()]
 
             c = True
-            for s in strings:
+            for s in chunks:
                 try:
                     self.lists[chartype][s] += 1
                 except KeyError:
@@ -406,7 +411,7 @@ class WordGen():
                     self.num_words[chartype] += 1
                 self.totals[chartype] += 1
 
-                if c is True and self.cap:
+                if chartype == 1 and c is True and self.cap:
                     self.lists[chartype][s] += 1
                     self.totals[chartype] += 1
                     c = False
@@ -674,7 +679,6 @@ class Grouper():
         self.in_list    = in_list
         self.leet       = leet
         self.progress   = progress
-        self.processed  = 0
 
 
     def parse(self):
@@ -686,7 +690,7 @@ class Grouper():
         global words_processed
 
         for word in self.in_list:
-            if self.progress == True and self.processed % 100 == 0:
+            if self.progress == True and words_processed % 100 == 0:
                 stderr.write('\r[+] {:,} words processed  '.format(words_processed))
             yield self.group_word(word)
             words_processed += 1
@@ -893,7 +897,12 @@ class ListStat():
     def add_next(self):
 
         #count = counts[c][0][list_stats[c].index][1]
-        count = self.counts[self.index][1]
+        count = self.counts[self.index]
+        
+        if type(count) == bytes:
+            count = 1
+        else:
+            count = count[1]
 
         self.current += count * self.multiplier
         self.percent = (self.current / self.total) * 100
@@ -904,53 +913,20 @@ class ListStat():
     def __str__(self):
 
         _str = ''
-        _str += '{}:\n====================\n'.format(self.friendly.capitalize())
-        _str += 'total:    {:,}\n'.format(self.total)
-        _str += 'current:  {:,}\n'.format(self.current)
-        _str += 'percent:  {:.2f}%\n'.format(self.percent)
-        _str += 'number:   {:,}\n'.format(self.number)
-        _str += 'index:    {:,}\n'.format(self.index)
-        _str += 'finished: {}\n'.format(str(self.finished))
+        _str += '{}:\n======================\n'.format(self.friendly.capitalize())
+        _str += 'total:      {:,}\n'.format(self.total)
+        _str += 'current:    {:,}\n'.format(self.current)
+        _str += 'percent:    {:.2f}%\n'.format(self.percent)
+        _str += 'number:     {:,}\n'.format(self.number)
+        _str += 'index:      {:,}\n'.format(self.index)
+        _str += 'multiplier: {:.3f}\n'.format(self.multiplier)
+        _str += 'finished:   {}\n'.format(str(self.finished))
 
         return _str
 
 
 
 ### FUNCTIONS ###
-
-
-def calc_multiplier(lengths, pps, target_time, strings=False, digits=False, rules=True):
-    '''
-    TODO - maybe pass in full dictionaries rather than lengths
-    let it iterate through all items (lists) like this:
-    1. max_per_item *= len(item) * multiplier
-    2. for each item:
-            total *= num_items
-            if not item.percent > (all the others)
-                if total > total_desired:
-                    break
-                item.allowed += 1
-                item.percent += (item.total / item[current].count)
-
-    this way, lists with broader curves get higher priority (e.g. more words, less rules)
-    '''
-
-    # make sure lengths are all integers
-    assert all( [type(i) == int for i in lengths] )
-
-    # multiply all lengths together
-    total_possible = reduce(lambda x,y: x*y, lengths)
-
-    return min(1, (total_desired / total_possible) ** (1 / num_mutations))
-    
-
-    if not self.target_time:
-        return 1
-
-    num_mutations = min(1, (0 if strings else 1) + (1 if digits else 0) + (1 if rules else 0))
-
-    total_desired = pps * (target_time * 3600)
-
 
 
 def is_smaller(p, stretchers):
@@ -960,11 +936,7 @@ def is_smaller(p, stretchers):
     if percents.count(p) > 1:
         return True
 
-    m = max(percents)
-    if p < m:
-        return True
-
-    return False
+    return p != max(percents)
 
 
 
@@ -997,7 +969,6 @@ def calc_max_inputs(stretchers, total_desired):
 
     while left > 0:
         for l in stretchers:
-            #print(l)
 
             current_total = calc_current_total(stretchers)
             if current_total < total_desired:
@@ -1017,9 +988,9 @@ def calc_max_inputs(stretchers, total_desired):
             else:
                 left = 0
                 break
-        #sleep(.1)
 
 
+    '''
     # fill up the empty space if we have any leftover room
     if current_total < total_desired:
         # count the number of 
@@ -1034,16 +1005,18 @@ def calc_max_inputs(stretchers, total_desired):
         for l in stretchers:
             if l.current:
                 l.current = int(l.current * multiplier)
-
+    '''
 
 
 
 def stretcher(options):
 
+    global max_leet, max_cap
+
     # create words / rules objects
-    words = WordGen(digits=(True if options.digits else False), cap=options.cap, capswap=options.capswap)
-    words = WordGen(cap=options.cap, capswap=options.capswap)
-    rules = RuleGen(cap=(options.cap or options.capswap), custom_digits=options.digits)
+    words = WordGen(digits=options.common_digits, cap=options.cap, capswap=options.capswap)
+    #words = WordGen(cap=options.cap, capswap=options.capswap)
+    rules = RuleGen(cap=(options.cap or options.capswap), custom_digits=(options.common_digits or (True if options.digits else False)))
 
 
     try:
@@ -1060,6 +1033,19 @@ def stretcher(options):
     rules.sort()
 
 
+    d_key = lambda x: x
+    if options.digits:
+        d = options.digits
+        d_total = len(options.digits)
+    elif options.common_digits:
+        d = words.sorted_words[2]
+        d_total = words.totals[2]
+        d_key = lambda x: x[0]
+    else:
+        d = []
+        d_total = 0
+
+
     # account for cap / leet mutations by creating multipliers
     leet_size = (max_leet if options.leet else 1)
     if options.capswap:
@@ -1070,11 +1056,11 @@ def stretcher(options):
 
     stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1),\
                             words=(words.sorted_words[1], words.totals[1], (cap_size * leet_size)),\
-                            digits=(words.sorted_words[2], words.totals[2], 1))
+                            digits=(d, d_total, 1))
 
 
     # total possible output before trimming takes place
-    total_possible = len(words.sorted_words[1]) * len(rules.sorted_rules) * stretchers.words.multiplier
+    total_possible = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) * stretchers.words.multiplier
 
 
     if options.target_time:
@@ -1086,8 +1072,8 @@ def stretcher(options):
         avg_percent_per_list = stretchers.avg_percents()
 
         # trim lists to newly calculated max lengths
-        rules.custom_digits = rules.custom_digits[:stretchers.digits.index]
         words.trim({1: stretchers.words.index, 2: stretchers.digits.index})
+        d = d[:stretchers.digits.index]
         rules.trim(stretchers.rules.index)
 
     else:
@@ -1097,19 +1083,34 @@ def stretcher(options):
 
 
     # total output after (optional) trimming
-    total_actual = len(words.sorted_words[1]) * len(rules.sorted_rules) * stretchers.words.multiplier
+    total_actual = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) * stretchers.words.multiplier
+
+
+    # if there's still room to grow,
+    # increase leet / cap output limits
+    if options.target_time and (total_actual < total_desired) and (options.capswap or options.leet):
+        num_mutations = min(1, (1 if options.capswap else 0) + (1 if options.leet else 0))
+        multiplier = pow( (total_desired / total_actual), (1 / num_mutations) )
+
+        max_leet = int(max_leet * multiplier)
+        max_cap = int(max_cap * multiplier)
+
+        stderr.write('\n[+] mutation cap increased to match desired time (multiplier: {:.4f})\n\n'.format(multiplier))
+
+        total_actual = int(total_actual * multiplier)
+
 
 
     if options.strings:
-        s_key = lambda x: x
+        w_key = lambda x: x
         s = Mutator(options.strings, cap=options.cap, capswap=options.capswap, leet=options.leet, maximum=stretchers.words.index).gen()
         # string key - since sorted words appear in format (string, count),
         # we must give the option to only select the string only
 
     else:
         words.sort()
-        s_key = lambda x: x[0]
-        s = Mutator(words.sorted_words[1], capswap=options.capswap, leet=options.leet, key=s_key).gen()
+        w_key = lambda x: x[0]
+        s = Mutator(words.sorted_words[1], capswap=options.capswap, leet=options.leet, key=w_key).gen()
 
 
     # print reports
@@ -1128,10 +1129,11 @@ def stretcher(options):
             print('\nCoverage by type:')
             for l in stretchers:
                 if l.current:
-                    print('    {}:     {:>15.1f}% ({:,})'.format(l.friendly, l.percent, l.index))
+                    friendly = l.friendly + ':' + (' ' * (10 - len(l.friendly)))
+                    print('    {}     {:.1f}% ({:,})'.format(friendly, l.percent, l.index))
 
-        print('Wordlist size:         {:>47}'.format(estimate_list_size(total_actual)))
-        pps = '\nHours at {:,} pps:'.format(options.pps)
+        print('\nWordlist size:         {:>47}'.format(estimate_list_size(total_actual)))
+        pps = 'Hours at {:,} pps:'.format(options.pps)
         hours = '{:.2f}'.format((total_actual / options.pps) / 3600)
         print(pps + ' '*(66-len(pps)+1-len(hours)) + hours + ' hrs')
 
@@ -1205,30 +1207,41 @@ def stretcher(options):
 
     # otherwise just dump passwords to stdout
     elif not options.report:
+        display_count = not stdout.isatty()
         if options.no_pend:
+            c = 0
             for _ in s:
+                if display_count and c % 1000 == 0:
+                    stderr.write('\r[+] {:,} words written'.format(c))
                 print(_.decode())
+
+            if display_count:
+                stderr.write('\r[+] {:,} words written\n'.format(c))
+
         else:
-            rules.dump(s, key=s_key)
+            rules.dump(s, digit_list=d, d_key=d_key, display_count=display_count)
 
 
 
 def read_file_or_str(s):
 
     try:
-        entries = ReadFile(s).read()
+        entries = list(ReadFile(s).read())
     except AssertionError:
         entries = [e.encode() for e in s.split(',')]
 
-    for e in entries:
-        yield e
+    #for e in entries:
+    #    yield e
+
+    return entries
 
 
 
 def estimate_list_size(n):
 
     # 9.75 = average bytes per line (including newlines) in rockyou
-    return bytes_to_human(int(n * 9.75))
+    # 1.4  = size adjustment for mangling
+    return bytes_to_human(int(n * 9.75 * 1.4))
 
 
 
@@ -1238,12 +1251,16 @@ def bytes_to_human(_bytes):
     units = {}
     count = 0
     for size in sizes:
-        units[size] = 1024 ** count
+        units[size] = pow(1024, count)
         count +=1
 
     for size in sizes:
         if abs(_bytes) < 1024.0:
-            return '{:.2f}{}'.format(_bytes, size)
+            if size == sizes[0]:
+                _bytes = str(int(_bytes))
+            else:
+                _bytes = '{:.2f}'.format(_bytes)
+            return '{}{}'.format(_bytes, size)
         _bytes /= 1024
 
     raise ValueError
@@ -1265,10 +1282,11 @@ if __name__ == '__main__':
     parser.add_argument('-hc', '--hashcat',         type=Path,                                  help="create hashcat resources in this folder", metavar='DIR')
 
     parser.add_argument('-t', '--target-time',      type=float,                                 help="desired maximum crack time in hours", metavar='')
-    parser.add_argument('-p', '--pps',              type=int,         default=1000000,          help="expected hashrate (packets per second)", metavar='')
+    parser.add_argument('-p', '--pps',              type=int,         default=1000000,          help="expected hashrate (passwords per second)", metavar='')
 
     parser.add_argument('-s', '--strings',          type=read_file_or_str, default=[],          help="use these strings instead of those in the wordlist", metavar='')
-    parser.add_argument('-d', '--digits',           type=read_file_or_str, default=[],          help="use these digits instead of those in the wordlist", metavar='')
+    parser.add_argument('-d', '--digits',           type=read_file_or_str, default=[],          help="during rule generation, replace digits with these", metavar='')
+    parser.add_argument('-g', '--common-digits',    action='store_true',                        help="during rule generation, replace digits with common occurrences")
 
     parser.add_argument('-L',   '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
     parser.add_argument('-c',   '--cap',            action='store_true',                        help="common upper/lowercase variations")
