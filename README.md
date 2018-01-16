@@ -29,8 +29,8 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 ### Help:
 ~~~
 $ ./stretcher.py --help
-usage: stretcher.py [-h] [-w] [-r] [-n] [-hc DIR] [-t] [-p] [-s] [-d] [-L]
-                    [-c] [-C]
+usage: stretcher.py [-h] [-w] [-r] [--report-size] [-n] [-hc DIR] [-t] [-p]
+                    [-s] [-d] [-g] [-L] [-c] [-C]
 
 FETCH THE PASSWORD STRETCHER
 
@@ -38,13 +38,16 @@ optional arguments:
   -h, --help            show this help message and exit
   -w , --wordlist       wordlist to analyze / stretch (default: STDIN)
   -r, --report          print report
-  -n, --no-pend         mangle only - no appending/prepending
+  --report-size         maximum number of results in report
+  -n, --no-pend         cap/leet mangling only - no appending/prepending
   -hc DIR, --hashcat DIR
                         create hashcat resources in this folder
   -t , --target-time    desired maximum crack time in hours
-  -p , --pps            expected hashrate (packets per second)
+  -p , --pps            expected hashrate (passwords per second)
   -s , --strings        use these strings instead of those in the wordlist
-  -d , --digits         use these digits instead of those in the wordlist
+  -d , --digits         during rule generation, replace digits with these
+  -g, --common-digits   during rule generation, replace digits with common
+                        occurrences
   -L, --leet            "leetspeak" mutations
   -c, --cap             common upper/lowercase variations
   -C, --capswap         all possible case combinations
