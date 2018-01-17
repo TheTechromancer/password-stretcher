@@ -8,8 +8,7 @@ by TheTechromancer
 
 TODO:
 
-    Ponder validity of empty rule ( [string] )
-    Take out, leave in, or only leave in if len(rules.sorted_rules) == 0?
+    test despair debug rejoice repeat
 
 '''
 
@@ -30,6 +29,8 @@ leet_chars      = (b'013578@$') # characters to consider "leet"
 
 max_leet        = 64            # max number of leet mutations per word
 max_cap         = 256           # max number of capitalization mutations per word
+                                # note: both of these are automatically increased
+                                # if there's still headroom afterwards
 
 report_limit    = 50            # maximum lines for each individual report
 
@@ -97,7 +98,7 @@ class RuleGen():
 
 
 
-    def dump(self, word_list, digit_list=[], d_key=lambda x: x, display_count=False):
+    def dump(self, word_list, digit_list=[], d_key=lambda x: x):
         '''
         given wordlist, applies rules to each word and dumps to STDOUT
         '''
@@ -106,13 +107,12 @@ class RuleGen():
 
         self.sort()
 
-        _c = 0
         for word in word_list:
+
+            yield word
 
             c = 0
             for rule in self.sorted_rules:
-                if display_count and _c % 1000 == 0:
-                    stderr.write('\r[+] {:,} words written'.format(_c))
 
                 rule = rule[0]
 
@@ -120,19 +120,15 @@ class RuleGen():
                     out_word = rule.replace(string_delim, word)
                     if self.custom_digits and digit_delim in out_word:
                         for digit in digit_list:
-                            print( out_word.replace(digit_delim, d_key(digit)).decode() )
-                            _c += 1
+                            yield ( out_word.replace(digit_delim, d_key(digit)) )
                     else:
-                        print( out_word.decode() )
-                        _c += 1
+                        yield out_word
 
                     c += 1
 
                 except UnicodeDecodeError:
                     continue
 
-        if display_count:
-            stderr.write('\r[+] {:,} words written\n'.format(_c))
 
 
 
@@ -166,18 +162,20 @@ class RuleGen():
 
         num_groups = len(groups)
 
-        # "passthrough" rule
-        if num_groups == 1:
-            try:
-                self.rules[string_delim] += 1
-            except KeyError:
-                self.rules[string_delim] = 1
-                self.num_rules += 1
-            self.total += 1
-
-        # skip generating rules for overly complex words
-        elif num_groups > 5:
+    # skip generating rules for overly simple or complex words
+        if num_groups == 1 or num_groups > 5:
             return
+
+            '''
+            # "passthrough" rule
+            if num_groups == 1:
+                try:
+                    self.rules[string_delim] += 1
+                except KeyError:
+                    self.rules[string_delim] = 1
+                    self.num_rules += 1
+                self.total += 1
+            '''
 
         else:
 
@@ -563,31 +561,29 @@ class Mutator():
 
                 self.cur_leet += self.max_leet
 
-                results = [] # list is almost 4 times faster than set
+                results = set() # list is almost 4 times faster than set
                 num_results = 0
 
                 gen_common = self._leet(word, swap_values=self.leet_common)
                 for r in gen_common:
-                    if r != word and not r in results:
+                    if r != word:
                         if self.cur_leet <= 0:
                             break
-                        results.append(r)
+                        results.add(r)
                         self.cur_leet -= 1
                         yield r
 
                 gen_sparse = self._leet(word, swap_values=self.leet_all)
                 for r in gen_sparse:
-                    if r != word and not r in results:
+                    if r != word:
                         if self.cur_leet <= 0:
                             break
-                        results.append(r)
+                        results.add(r)
                         self.cur_leet -= 1
                         yield r
 
 
                 self.cur_leet += (self.max_leet - len(results))
-
-                results = []
 
 
 
@@ -848,9 +844,9 @@ class StretchStat():
         each arg is a tuple in the format:
         (counts, total, multiplier)
         '''
-        self.rules  = ListStat(rules[0], rules[1], multiplier=rules[2], friendly='rules')
-        self.words  = ListStat(words[0], words[1], multiplier=words[2], friendly='words')
-        self.digits = ListStat(digits[0], digits[1], multiplier=digits[2], friendly='digits')
+        self.rules  = ListStat(rules[0], rules[1], start=rules[2], multiplier=rules[3], friendly='rules')
+        self.words  = ListStat(words[0], words[1], start=words[2], multiplier=words[3], friendly='words')
+        self.digits = ListStat(digits[0], digits[1], start=digits[2], multiplier=digits[3], friendly='digits')
 
 
     def avg_percents(self):
@@ -881,14 +877,14 @@ class ListStat():
     them to match desired crack time.
     '''
 
-    def __init__(self, counts, total, multiplier=1, friendly=''):
+    def __init__(self, counts, total, start=0, multiplier=1, friendly=''):
 
         self.counts     = counts
-        self.total      = total * multiplier    # total including duplicates (before trimming)
+        self.total      = total * multiplier    # total including duplicates and mutations (before trimming)
         self.current    = 0                     # current total including duplicates and mutations
                                                 # used for calculating percent only
-        self.multiplier = multiplier
-        self.number     = 0                     # number - current total including mutations but not duplicates
+        self.multiplier = multiplier            # multiplier to account for leet / cap mutations
+        self.number     = start                 # number - current total including mutations but not duplicates
         self.percent    = 0.0
         self.index      = 0                     # index - used for keeping track of place
 
@@ -979,8 +975,6 @@ def calc_max_inputs(stretchers, total_desired):
                 if not l.finished:
 
                     try:
-                        #count = l.counts[l.index][1]
-
                         if left == 1 or is_smaller(l.percent, stretchers):
                             l.add_next()
 
@@ -1024,7 +1018,7 @@ def stretcher(options):
 
     try:
         # parse input
-        for word in Grouper(options.wordlist.read()).parse():
+        for word in Grouper(options.wordlist.read(), leet=(not options.leet)).parse():
             words.add(word)
             if not options.no_pend:
                 rules.add(word)
@@ -1057,13 +1051,13 @@ def stretcher(options):
         cap_size   = 1
 
 
-    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1),\
-                            words=(words.sorted_words[1], words.totals[1], (cap_size * leet_size)),\
-                            digits=(d, d_total, 1))
+    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1, 1),\
+                            words=(words.sorted_words[1], words.totals[1], 0, (cap_size * leet_size)),\
+                            digits=(d, d_total, 0, 1))
 
 
     # total possible output before trimming takes place
-    total_possible = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) * stretchers.words.multiplier
+    total_possible = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier
 
 
     if options.target_time:
@@ -1086,7 +1080,7 @@ def stretcher(options):
 
 
     # total output after (optional) trimming
-    total_actual = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) * stretchers.words.multiplier
+    total_actual = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier
 
 
     # if there's still room to grow,
@@ -1138,7 +1132,7 @@ def stretcher(options):
         print('\nWordlist size:         {:>47}'.format(estimate_list_size(total_actual)))
         pps = 'Hours at {:,} pps:'.format(options.pps)
         hours = '{:.2f}'.format((total_actual / options.pps) / 3600)
-        print(pps + ' '*(66-len(pps)+1-len(hours)) + hours + ' hrs')
+        print(pps + ' '*(66-len(pps)-len(hours)) + hours + ' hrs')
 
     # if we're using hashcat
     if options.hashcat:
@@ -1158,7 +1152,7 @@ def stretcher(options):
         rulename = str(options.hashcat / 'rules')
         scriptname = str(options.hashcat / 'hashcat.py')
 
-        # write hashcat wordlist
+        stderr.write('\n[+] Writing hashcat wordlist          ')
         with open(listname, 'w') as f:
 
             for word in s:
@@ -1167,14 +1161,14 @@ def stretcher(options):
                 except UnicodeDecodeError:
                     continue
 
-        # write hashcat rules
+        stderr.write('\r[+] Writing hashcat rules             ')
         if not options.no_pend:
             rules.write_rules(rulename)
             rulestr = ['-r', rulename]
         else:
             rulestr = []
 
-        # write hashcat script
+        stderr.write('\r[+] Writing hashcat script            ')
         with open(scriptname, 'w') as f:
 
             def_opts = [ '"{}"'.format(o) for o in (['-w', '1', '-a', '0'] + rulestr) ]
@@ -1200,7 +1194,7 @@ def stretcher(options):
 
             f.write('\n'.join(lines))
 
-        stderr.write('\n[+] Hashcat resources written to {}\n'.format(str(options.hashcat)))
+        stderr.write('\r[+] Hashcat resources written to {}     \n'.format(str(options.hashcat)))
         stderr.write('[+] Please run: {} -h\n'.format(scriptname))
 
 
@@ -1211,18 +1205,23 @@ def stretcher(options):
     # otherwise just dump passwords to stdout
     elif not options.report:
         display_count = not stdout.isatty()
+        c = 0
         if options.no_pend:
-            c = 0
-            for _ in s:
-                if display_count and c % 1000 == 0:
-                    stderr.write('\r[+] {:,} words written'.format(c))
-                print(_.decode())
+            source = s
+        else:
+            source = rules.dump(s, digit_list=d, d_key=d_key,)
+            
+        for _ in source:
+            if display_count and c % 1000 == 0:
+                stderr.write('\r[+] {:,} words written'.format(c))
+            print(_.decode())
+            c += 1
 
-            if display_count:
-                stderr.write('\r[+] {:,} words written\n'.format(c))
+        if display_count:
+            stderr.write('\r[+] {:,} words written\n'.format(c))
 
         else:
-            rules.dump(s, digit_list=d, d_key=d_key, display_count=display_count)
+            rules.dump(s, digit_list=d, d_key=d_key,)
 
 
 
