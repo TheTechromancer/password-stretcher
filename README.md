@@ -193,8 +193,6 @@ Hours at 1,000,000 pps:                                       1.00 hrs
 	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some headroom for --cap, if included)</li>
   <li>
     Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example:
-    ~~~
-    $ cat rockyou.txt | ./stretcher.py --strings evilcorp --leet --digits 2016,2017,2018 
-    ~~~
+    `$ cat rockyou.txt | ./stretcher.py --strings evilcorp --leet --digits 2016,2017,2018`
   </li>
 </ul>
