@@ -16,9 +16,9 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 			<li>Prepend "Pass00" and append "!!"</li>
 		</ol>
 	</li>
-	<li>Generates list of commonly occurring strings (and digits, if desired)</li>
+	<li>Generates list of strings commonly occurring in the wordlist</li>
   <li>Optionally applies leet / cap mutations to said strings</li>
-  <li>Trims rules and words with lower occurrences to comply with desired crack time</li>
+  <li>Trims list entries with lower occurrence to match desired crack time</li>
 	<li>Outputs passwords (or optionally generates hashcat rules) based on combination of generated lists, mutations, and rules</li>
 </ol>
 
@@ -28,7 +28,6 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 
 ### Help:
 ~~~
-$ ./stretcher.py --help
 usage: stretcher.py [-h] [-w] [-r] [--report-size] [-n] [-hc DIR] [-t] [-p]
                     [-s] [-d] [-g] [-L] [-c] [-C]
 
@@ -61,36 +60,42 @@ optional arguments:
 ~~~
 $ echo -e 'a_few_somewhat\nc0mplex22\nPass.words' | ./stretcher.py
 [+] 3 words processed  
+words
 Pass.words
 words.words
 words22
 a_few_words
 a_words_somewhat
 words_few_somewhat
+Pass
 Pass.Pass
 Pass.words
 Pass22
 a_few_Pass
 a_Pass_somewhat
 Pass_few_somewhat
+c0mplex
 Pass.c0mplex
 c0mplex.words
 c0mplex22
 a_few_c0mplex
 a_c0mplex_somewhat
 c0mplex_few_somewhat
+somewhat
 Pass.somewhat
 somewhat.words
 somewhat22
 a_few_somewhat
 a_somewhat_somewhat
 somewhat_few_somewhat
+few
 Pass.few
 few.words
 few22
 a_few_few
 a_few_somewhat
 few_few_somewhat
+a
 Pass.a
 a.words
 a22
@@ -136,48 +141,48 @@ Top 25 Strings out of 463,571 (2.2% coverage)
 
 
 
-Top 25 Rules out of 33,147 (75.4% coverage)
-=============================================
-        562,111 (55.2%):    [string]                      
-         54,856 (5.4%):    [string]1                     
-         14,922 (1.5%):    [string]123                   
-         12,979 (1.3%):    [string]2                     
-         10,406 (1.0%):    [string]12                    
-          8,563 (0.8%):    [string]3                     
-          7,882 (0.8%):    [string]13                    
-          7,308 (0.7%):    [string]7                     
-          6,574 (0.6%):    [string]11                    
-          6,284 (0.6%):    [string]5                     
-          5,754 (0.6%):    [string]22                    
-          5,724 (0.6%):    [string]23                    
-          5,665 (0.6%):    [string]01                    
-          5,521 (0.5%):    [string]21                    
-          5,496 (0.5%):    [string]07                    
-          5,317 (0.5%):    [string]4                     
-          5,168 (0.5%):    [string]14                    
-          5,075 (0.5%):    [string]10                    
-          4,994 (0.5%):    [string]!                     
-          4,850 (0.5%):    [string]06                    
-          4,712 (0.5%):    [string]08                    
-          4,657 (0.5%):    [string]69                    
-          4,619 (0.5%):    [string]15                    
-          4,392 (0.4%):    [string]8                     
-          4,326 (0.4%):    [string]16                    
+Top 25 Rules out of 33,146 (46.1% coverage)
+=============================================                                                                                                                                                
+         54,856 (12.0%):    [string]1                                                                                                                                                        
+         14,922 (3.3%):    [string]123                                                                                                                                                       
+         12,979 (2.8%):    [string]2                                                                                                                                                         
+         10,406 (2.3%):    [string]12                                                                                                                                                        
+          8,563 (1.9%):    [string]3                                                                                                                                                         
+          7,882 (1.7%):    [string]13                                                                                                                                                        
+          7,308 (1.6%):    [string]7                                                                                                                                                         
+          6,574 (1.4%):    [string]11                    
+          6,284 (1.4%):    [string]5                     
+          5,754 (1.3%):    [string]22                    
+          5,724 (1.3%):    [string]23                    
+          5,665 (1.2%):    [string]01                    
+          5,521 (1.2%):    [string]21                    
+          5,496 (1.2%):    [string]07                    
+          5,317 (1.2%):    [string]4                     
+          5,168 (1.1%):    [string]14                    
+          5,075 (1.1%):    [string]10                    
+          4,994 (1.1%):    [string]!                     
+          4,850 (1.1%):    [string]06                    
+          4,712 (1.0%):    [string]08                    
+          4,657 (1.0%):    [string]69                    
+          4,619 (1.0%):    [string]15                    
+          4,392 (1.0%):    [string]8                     
+          4,326 (0.9%):    [string]16                    
+          4,281 (0.9%):    1[string]                     
 
 
 Words processed:                                             1,000,000
 Possible combinations:                                  15,365,987,937
 Timeframe target:                                        3,600,000,000
-Actual combinations:                                     3,600,095,751
+Actual combinations:                                     3,600,220,850
 ======================================================================
 Overall coverage:                                               23.43%
 
 Coverage by type:
-    words:          97.5% (441,567)
-    rules:          97.5% (8,153)
+    words:          94.6% (415,490)
+    rules:          94.6% (8,664)
 
 Wordlist size:                                                 45.77GB
-Hours at 1,000,000 pps:                                        1.00 hrs
+Hours at 1,000,000 pps:                                       1.00 hrs
 ~~~
 
 <br>
@@ -186,4 +191,10 @@ Hours at 1,000,000 pps:                                        1.00 hrs
 <ul>
   <li>I've made an effort to reduce duplicates in output.  A small number of duplicates will occur due to the nature of the algorithm, though.  Linux homies can simply | sort | uniq. ;)</li>
 	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some headroom for --cap, if included)</li>
+  <li>
+    Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example:
+    ~~~
+    $ cat rockyou.txt | ./stretcher.py --strings evilcorp --leet --digits 2016,2017,2018 
+    ~~~
+  </li>
 </ul>
