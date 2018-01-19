@@ -890,7 +890,7 @@ class ListStat():
                                                 # used for calculating percent only
         self.multiplier = multiplier            # multiplier to account for leet / cap mutations
         self.number     = start                 # number - current total including mutations but not duplicates
-        self.percent    = 0.0
+        self.percent    = 100.0
         self.index      = 0                     # index - used for keeping track of place
 
         self.finished   = False
@@ -940,7 +940,7 @@ def is_smaller(p, stretchers):
     if percents.count(p) > 1:
         return True
 
-    return p != max(percents)
+    return p == min(percents)
 
 
 
@@ -1017,7 +1017,6 @@ def calc_perm_multiplier(list_len, perm_depth):
     for n in range(perm_depth-1):
         total.append(total[n] * (list_len-(n+1)))
 
-    print(total)
     return int(reduce(lambda x,y: x+y, total) / list_len)
 
 
@@ -1174,7 +1173,7 @@ def stretcher(options):
 
         print('\nWordlist size:         {:>47}'.format(estimate_list_size(total_actual)))
         pps = 'Hours at {:,} pps:'.format(options.pps)
-        hours = '{:.2f}'.format((total_actual / options.pps) / 3600)
+        hours = '{:,.2f}'.format((total_actual / options.pps) / 3600)
         print(pps + ' '*(66-len(pps)-len(hours)) + hours + ' hrs')
 
 
