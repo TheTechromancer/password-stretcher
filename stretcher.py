@@ -346,6 +346,7 @@ class WordGen():
         for chartype in self.chartypes:
 
             if not self.sorted_words[chartype]:
+                report.append(str(len(self.sorted_words[chartype])))
                 report.append('\n[!] No {} to display.'.format(self.chartypes[chartype]))
                 continue
 
@@ -890,7 +891,7 @@ class ListStat():
                                                 # used for calculating percent only
         self.multiplier = multiplier            # multiplier to account for leet / cap mutations
         self.number     = start                 # number - current total including mutations but not duplicates
-        self.percent    = 100.0
+        self.percent    = 1000.0
         self.index      = 0                     # index - used for keeping track of place
 
         self.finished   = False
@@ -937,7 +938,7 @@ def is_smaller(p, stretchers):
 
     percents = [l.percent for l in stretchers]
 
-    if percents.count(p) > 1:
+    if percents.count(p) > 1 or p == 1000.0:
         return True
 
     return p == min(percents)
@@ -1033,7 +1034,7 @@ def stretcher(options):
 
 
     try:
-        # parse input
+        # parse input (don't treat leet characters specially if we're mutating anyway)
         for word in Grouper(options.wordlist.read(), leet=(not options.leet)).parse():
             # passing in "string" arg lets us skip strings while still injesting digits, if required
             words.add(word, string=(not options.strings))
