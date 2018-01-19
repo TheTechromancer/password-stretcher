@@ -8,6 +8,8 @@ by TheTechromancer
 
 TODO:
 
+    implement word.add_str() function for injesting --strings input
+
     test despair debug rejoice repeat
 
 '''
@@ -76,7 +78,7 @@ class RuleGen():
         try:
             percent_displayed = (display_count / self.total) * 100
         except:
-            assert False, 'No rules to display.'
+            return '[!] No rules to display.'
 
         report = []
 
@@ -289,7 +291,7 @@ class RuleGen():
 
 class WordGen():
 
-    def __init__(self, in_list=[], digits=False, cap=False, capswap=False):
+    def __init__(self, in_list=[], digits=False, cap=False, capswap=False, double=False):
         '''
         accepts iterable of words from which to generate list
         of individual strings and/or digits
@@ -326,6 +328,7 @@ class WordGen():
 
         self.cap            = cap
         self.capswap        = capswap
+        self.double         = double
 
         for word in Grouper(in_list).parse():
             self.add(word)
@@ -343,6 +346,7 @@ class WordGen():
         for chartype in self.chartypes:
 
             if not self.sorted_words[chartype]:
+                report.append('\n[!] No {} to display.'.format(self.chartypes[chartype]))
                 continue
 
             display_count = 0
@@ -351,10 +355,7 @@ class WordGen():
                 display_count += word[1]
                 display_len += 1
 
-            try:
-                percent_displayed = (display_count / self.totals[chartype]) * 100
-            except:
-                report.append('\nNo {} to display.\n'.format(self.chartypes[chartype]))
+            percent_displayed = (display_count / self.totals[chartype]) * 100
 
             title_str = '\n\nTop {:,} {} out of {:,} ({:.1f}% coverage)'.format(display_len, self.chartypes[chartype].capitalize(), self.num_words[chartype], percent_displayed)
             report.append(title_str)
@@ -362,11 +363,8 @@ class WordGen():
 
             for word in self.sorted_words[chartype][:display_len]:
                 string, count = word
-
                 occurance = (count / self.totals[chartype]) * 100
-                    
                 report.append('{:>15,} ({:.1f}%):    {:<30}'.format(count, occurance, string.decode()))
-
 
         return '\n'.join(report) + '\n'
 
@@ -388,20 +386,20 @@ class WordGen():
         return filenames
 
 
-    def add(self, grouped):
+    def add(self, grouped, string=True):
 
         for group in grouped:
             chartype, chunk = group
 
-            if chartype == 4 or (chartype == 2 and not self.digits):
+            if (chartype == 4) or (chartype == 2 and not self.digits) or (chartype == 1 and not string):
                 continue
 
             chunks = [chunk]
             if chartype == 1:
                 if self.capswap:
                     chunks = [chunk.lower()]
-                elif self.cap:
-                    chunks = [s for s in Mutator([chunk], cap=True).gen()]
+                elif self.cap or self.double:
+                    chunks = [s for s in Mutator([chunk], cap=self.cap, double=self.double).gen()]
 
             c = True
             for s in chunks:
@@ -441,7 +439,7 @@ class WordGen():
 
 class Mutator():
 
-    def __init__(self, in_list, perm=0, leet=False, cap=False, capswap=False, key=lambda x: x):
+    def __init__(self, in_list, double=0, perm=0, leet=False, cap=False, capswap=False, key=lambda x: x):
 
         # "leet" character swaps - modify as needed.
         # Keys are replaceable characters; values are their leet replacements.
@@ -491,6 +489,7 @@ class Mutator():
         self.do_leet        = leet
         self.do_capswap     = capswap
         self.do_cap         = cap or capswap
+        self.double         = double
 
         self.key            = key
 
@@ -510,28 +509,33 @@ class Mutator():
             yield word
 
 
-    def perm(self, in_list, repeat=True):
+    def perm(self, in_list):
         '''
         permutates words from iterable
         takes:      iterable containing words
         yields:     word permutations ('pass', 'word' --> 'password', 'wordpass', etc.)
         '''
 
+        words = in_list
+
         if self.perm_depth > 1:
 
             words = [ self.key(w) for w in in_list ]
             
             for d in range(1, self.perm_depth+1):
-                if repeat:
-                    for p in itertools.product(words, repeat=d):
-                        yield b''.join(p)
+                for p in itertools.permutations(words, d):
+                    yield b''.join(p)
 
-                else:
-                    for p in itertools.permutations(words, d):
-                        yield b''.join(p)
         else:
-            for word in in_list:
-                yield self.key(word)
+            for word in words:
+
+                word = self.key(word)
+
+                yield word
+
+                if self.double:
+                    yield word + word
+
 
 
     def cap(self, in_list):
@@ -689,10 +693,11 @@ class Grouper():
         global words_processed
 
         for word in self.in_list:
-            if self.progress == True and words_processed % 100 == 0:
-                stderr.write('\r[+] {:,} words processed  '.format(words_processed))
-            yield self.group_word(word)
-            words_processed += 1
+            if word:
+                if self.progress == True and words_processed % 100 == 0:
+                    stderr.write('\r[+] {:,} words processed  '.format(words_processed))
+                yield self.group_word(word)
+                words_processed += 1
 
         stderr.write('\r[+] {:,} words processed  '.format(words_processed))
 
@@ -1005,6 +1010,18 @@ def calc_max_inputs(stretchers, total_desired):
     '''
 
 
+def calc_perm_multiplier(list_len, perm_depth):
+
+    total = [list_len]
+
+    for n in range(perm_depth-1):
+        total.append(total[n] * (list_len-(n+1)))
+
+    print(total)
+    return int(reduce(lambda x,y: x+y, total) / list_len)
+
+
+
 
 def stretcher(options):
 
@@ -1019,9 +1036,15 @@ def stretcher(options):
     try:
         # parse input
         for word in Grouper(options.wordlist.read(), leet=(not options.leet)).parse():
-            words.add(word)
+            # passing in "string" arg lets us skip strings while still injesting digits, if required
+            words.add(word, string=(not options.strings))
             if not options.no_pend:
                 rules.add(word)
+
+        if options.strings:
+            for word in options.strings:
+                words.add([(1, word)])
+
     except KeyboardInterrupt:
         pass
 
@@ -1050,14 +1073,25 @@ def stretcher(options):
     else:
         cap_size   = 1
 
+    # account for doubling
+    if options.double:
+        double      = 2
+    else:
+        double      = 1
+
+
+    # account for permuations, before trimming
+    perm_multiplier = calc_perm_multiplier(len(words.sorted_words[1]), options.permutations)
+
 
     stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1, 1),\
-                            words=(words.sorted_words[1], words.totals[1], 0, (cap_size * leet_size)),\
+                            words=(words.sorted_words[1], words.totals[1], 0, (cap_size * leet_size * double)),\
                             digits=(d, d_total, 0, 1))
 
 
     # total possible output before trimming takes place
-    total_possible = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier
+    total_possible = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
+        stretchers.words.multiplier * perm_multiplier) if words_processed else 0
 
 
     if options.target_time:
@@ -1078,9 +1112,14 @@ def stretcher(options):
         stretchers.words.index = None
         stretchers.digits.index = None
 
+    # account for permuations, after trimming
+    perm_multiplier = calc_perm_multiplier(len(words.sorted_words[1]), options.permutations)
+
 
     # total output after (optional) trimming
-    total_actual = max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier
+    total_actual = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
+        stretchers.words.multiplier * perm_multiplier) if words_processed else 0
+    #(max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier) if words_processed else 0
 
 
     # if there's still room to grow,
@@ -1097,17 +1136,16 @@ def stretcher(options):
         total_actual = int(total_actual * multiplier)
 
 
-
     if options.strings:
         w_key = lambda x: x
-        s = Mutator(options.strings, cap=options.cap, capswap=options.capswap, leet=options.leet, maximum=stretchers.words.index).gen()
+        s = Mutator(options.strings, double=options.double, perm=options.permutations, cap=options.cap, capswap=options.capswap, leet=options.leet).gen()
         # string key - since sorted words appear in format (string, count),
         # we must give the option to only select the string only
 
     else:
         words.sort()
         w_key = lambda x: x[0]
-        s = Mutator(words.sorted_words[1], capswap=options.capswap, leet=options.leet, key=w_key).gen()
+        s = Mutator(words.sorted_words[1], double=options.double, perm=options.permutations, capswap=options.capswap, leet=options.leet, key=w_key).gen()
 
 
     # print reports
@@ -1120,7 +1158,12 @@ def stretcher(options):
             print('Timeframe target:      {:>47,}'.format(total_desired))
         print('Actual combinations:   {:>47,}'.format(total_actual))
         print('=' * 70)
-        print('Overall coverage:    {:>48.2f}%'.format(total_actual / total_possible * 100))
+
+        try:
+            o_coverage = total_actual / total_possible * 100
+        except ZeroDivisionError:
+            o_coverage = 100
+        print('Overall coverage:    {:>48.2f}%'.format(o_coverage))
 
         if options.target_time:
             print('\nCoverage by type:')
@@ -1133,6 +1176,7 @@ def stretcher(options):
         pps = 'Hours at {:,} pps:'.format(options.pps)
         hours = '{:.2f}'.format((total_actual / options.pps) / 3600)
         print(pps + ' '*(66-len(pps)-len(hours)) + hours + ' hrs')
+
 
     # if we're using hashcat
     if options.hashcat:
@@ -1214,7 +1258,10 @@ def stretcher(options):
         for _ in source:
             if display_count and c % 1000 == 0:
                 stderr.write('\r[+] {:,} words written'.format(c))
-            print(_.decode())
+            try:
+                print(_.decode())
+            except UnicodeDecodeError:
+                continue
             c += 1
 
         if display_count:
@@ -1286,14 +1333,15 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--target-time',      type=float,                                 help="desired maximum crack time in hours", metavar='')
     parser.add_argument('-p', '--pps',              type=int,         default=1000000,          help="expected hashrate (passwords per second)", metavar='')
 
-    parser.add_argument('-s', '--strings',          type=read_file_or_str, default=[],          help="use these strings instead of those in the wordlist", metavar='')
-    parser.add_argument('-d', '--digits',           type=read_file_or_str, default=[],          help="during rule generation, replace digits with these", metavar='')
+    parser.add_argument('-s', '--strings',          type=read_file_or_str,  default=[],         help="use these strings instead of those in the wordlist", metavar='')
+    parser.add_argument('-d', '--digits',           type=read_file_or_str,  default=[],         help="during rule generation, replace digits with these", metavar='')
     parser.add_argument('-g', '--common-digits',    action='store_true',                        help="during rule generation, replace digits with common occurrences")
 
     parser.add_argument('-L',   '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
     parser.add_argument('-c',   '--cap',            action='store_true',                        help="common upper/lowercase variations")
     parser.add_argument('-C',   '--capswap',        action='store_true',                        help="all possible case combinations")
-    #parser.add_argument('-P',   '--permutations',   type=int,           default=1,              help="Max times to combine words (careful! exponential)", metavar='INT')
+    parser.add_argument('-dd',   '--double',        action='store_true',                        help="double each word (e.g. \"Pass\" --> \"PassPass\")")
+    parser.add_argument('-P',   '--permutations',   type=int,               default=1,          help="Max permutation depth (careful! massive output)", metavar='INT')
 
 
     try:
