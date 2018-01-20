@@ -199,9 +199,9 @@ Hours at 1,000,000 pps:                                       1.00 hrs
   <li>This program attempts to predict the size of its output, but isn't always 100% accurate.  It will play it safe and estimate higher rather than lower, unless --permuatations are used, in which case it doesn't even try.</li>
   <li>I've made an effort to reduce duplicates in output.  A small number of duplicates will occur due to the nature of the algorithm, though.  Linux homies can simply | sort | uniq. ;)</li>
   <li>The difference between --wordlist and --strings: "wordlist" is the list which is analyzed and "learned from".  Commonly occuring strings from that list will be used in the output, but can be overridden with --strings if you want to use your own instead.</li>
-	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some headroom for --cap, if included)</li>
+	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some reasonable headroom for options like --permutations, if included)</li>
   <li>
     Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example: <br>
-    `$ cat rockyou.txt | ./stretcher.py --strings evilcorp.txt --leet --digits '2016,2017,2018'`
+    $ cat rockyou.txt | ./stretcher.py --strings evilcorp.txt --leet --digits '2016,2017,2018'
   </li>
 </ul>
