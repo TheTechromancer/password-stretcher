@@ -1125,8 +1125,10 @@ def stretcher(options):
 
 
     # total possible output before trimming takes place
-    total_possible = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) + len(words.sorted_words[1]) *\
-        stretchers.words.multiplier * perm_multiplier) if words_processed else 0
+    word_total = max(1, len(words.sorted_words[1])) * stretchers.words.multiplier * perm_multiplier
+    total_possible = (word_total * max(1, len(d)) * max(1, len(rules.sorted_rules)) + word_total) if words_processed else 0
+    #total_possible = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) + len(words.sorted_words[1]) *\
+    #    stretchers.words.multiplier * perm_multiplier) if words_processed else 0
     #(max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
     #    stretchers.words.multiplier * perm_multiplier) if words_processed else 0
 
@@ -1154,13 +1156,15 @@ def stretcher(options):
 
 
     # total output after (optional) trimming
-    total_actual = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) + len(words.sorted_words[1]) *\
-        stretchers.words.multiplier * perm_multiplier) if words_processed else 0
+    #print(max(1, len(words.sorted_words[1])), max(1, len(d)), max(1, len(rules.sorted_rules)), stretchers.words.multiplier )
+    word_total = max(1, len(words.sorted_words[1])) * stretchers.words.multiplier * perm_multiplier
+    total_actual = (word_total * max(1, len(d)) * max(1, len(rules.sorted_rules)) + word_total) if words_processed else 0
     #(max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier) if words_processed else 0
 
 
     # if there's still room to grow,
     # increase leet / cap output limits
+    #print('\ntotal_possible', total_possible, 'total_desired', total_desired, 'total_actual', total_actual)
     if options.target_time and (total_actual < total_desired) and (options.capswap or options.leet):
         num_mutations = min(1, (1 if options.capswap else 0) + (1 if options.leet else 0))
         multiplier = pow( (total_desired / total_actual), (1 / num_mutations) )
