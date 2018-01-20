@@ -192,7 +192,7 @@ Hours at 1,000,000 pps:                                       1.00 hrs
   <li>I've made an effort to reduce duplicates in output.  A small number of duplicates will occur due to the nature of the algorithm, though.  Linux homies can simply | sort | uniq. ;)</li>
 	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some headroom for --cap, if included)</li>
   <li>
-    Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example:
+    Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example: <br>
     `$ cat rockyou.txt | ./stretcher.py --strings evilcorp --leet --digits 2016,2017,2018`
   </li>
 </ul>
