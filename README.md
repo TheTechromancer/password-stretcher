@@ -6,20 +6,21 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 <br>
 
 ### How it works:
+##### (Slightly oversimplified, but this is the gist of it)
 
 <ol>
 	<li>
 		Analyzes wordlist and generates rules based on the treatment of strings and digits.
-		For example, "Pass00word!!" would generate two rules:
+		For example, "Pass4word!!" would generate two rules:
 		<ol>
-			<li>Append "00word!!"</li>
-			<li>Prepend "Pass00" and append "!!"</li>
+			<li>Append "4word!!"</li>
+			<li>Prepend "Pass4" and append "!!"</li>
 		</ol>
 	</li>
-	<li>Keeps track of commonly occurring strings in the wordlist</li>
-  <li>Optionally applies leet / cap mutations to said strings</li>
-  <li>Trims list entries with lower occurrence to match desired crack time</li>
-	<li>Outputs passwords (or optionally generates hashcat rules) based on combination of generated lists, mutations, and rules</li>
+	<li>Keeps track of commonly occurring strings/digits in the wordlist</li>
+  <li>Optionally applies leet / cap mutations to aforementioned strings</li>
+  <li>Trims less common word/digit/rule occurrences to match desired crack time</li>
+	<li>Generates passwords (or optionally, hashcat rules) based on combination of gathered lists, mutations, and rules</li>
 </ol>
 
 
