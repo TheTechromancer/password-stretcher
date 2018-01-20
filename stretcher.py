@@ -1188,10 +1188,10 @@ def stretcher(options):
         print('=' * 70)
 
         try:
-            o_coverage = total_actual / total_possible * 100
+            stretched_to = int(total_actual / words_processed)
         except ZeroDivisionError:
-            o_coverage = 100
-        print('Overall coverage:    {:>48.2f}%'.format(o_coverage))
+            stretched_to = 100
+        print('Stretched to:        {:>48,}x'.format(stretched_to))
 
         if options.target_time:
             print('\nCoverage by type:')
@@ -1382,6 +1382,7 @@ if __name__ == '__main__':
             stderr.write('\n [!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
 
+        # if custom report size is specified, assume a report is desired
         if options.report_size != parser.get_default('report_size'):
             options.report = True
 
