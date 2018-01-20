@@ -8,8 +8,6 @@ by TheTechromancer
 
 TODO:
 
-    implement word.add_str() function for injesting --strings input
-
     test despair debug rejoice repeat
 
 '''
@@ -346,7 +344,6 @@ class WordGen():
         for chartype in self.chartypes:
 
             if not self.sorted_words[chartype]:
-                report.append(str(len(self.sorted_words[chartype])))
                 report.append('\n[!] No {} to display.'.format(self.chartypes[chartype]))
                 continue
 
@@ -543,8 +540,6 @@ class Mutator():
 
         for word in in_list:
 
-            yield word
-
             if self.do_cap:
 
                 self.cur_cap += self.max_cap
@@ -554,6 +549,10 @@ class Mutator():
                     yield r
                     if self.cur_cap <= 0:
                         break
+
+            else:
+                yield word
+
 
 
     def leet(self, in_list):
@@ -600,18 +599,52 @@ class Mutator():
 
         # set type used to prevent duplicates
         results = []
-        for r in [word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
-            if r != word and r not in results:
+        for r in [word, word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
+            if r not in results:
                 results.append(r)
                 yield r
 
         if self.do_capswap:
 
+            '''
             # oneliner which basically does it all
+            # but, upon further quality testing, slow as heckkk
             for r in map(bytes, itertools.product(*zip(word.lower(), word.upper()))):
                 if r != word and not r in results:
                     results.append(r)
                     yield r
+            '''
+
+            # here down is new & experimental
+            word_list = list(word.lower())
+
+            # count number of alpha characters in word
+            num_alpha = 0
+            for i in range(len(word)):
+                if word[i:i+1].isalpha():
+                    num_alpha += 1
+
+            b = 0
+            # mirroring the iterative binary representation of a number whose bitlength is equal to the number of alpha characters in the word
+            # too much alcohol
+            for i in range(pow(num_alpha, 2)):
+                new_word = word_list.copy()
+
+                for bit in range(len(word)):
+                    if not word[bit:bit+1].isalpha():
+                        continue
+
+                    if i & 1 << bit:
+                        # capitalize
+                        new_word[bit] -= 32
+
+                new_word = bytes(new_word)
+
+                if new_word not in results:
+                    results.append(new_word)
+                    yield new_word
+
+
 
 
 
@@ -956,6 +989,8 @@ def calc_current_total(stretchers):
     for l in stretchers:
         t *= max(1,l.number)
 
+    t += stretchers.words.number
+
     return t
 
     #return reduce(lambda x,y:max(1,x)*max(1,y), [_.number for _ in stretchers])
@@ -1034,12 +1069,13 @@ def stretcher(options):
 
 
     try:
-        # parse input (don't treat leet characters specially if we're mutating anyway)
-        for word in Grouper(options.wordlist.read(), leet=(not options.leet)).parse():
-            # passing in "string" arg lets us skip strings while still injesting digits, if required
-            words.add(word, string=(not options.strings))
-            if not options.no_pend:
-                rules.add(word)
+        if not (options.strings and options.no_pend):
+            # parse input (don't treat leet characters specially if we're mutating anyway)
+            for word in Grouper(options.wordlist.read(), leet=(not options.leet)).parse():
+                # passing in "string" arg lets us skip strings while still injesting digits, if required
+                words.add(word, string=(not options.strings))
+                if not options.no_pend:
+                    rules.add(word)
 
         if options.strings:
             for word in options.strings:
@@ -1051,7 +1087,6 @@ def stretcher(options):
 
     words.sort()
     rules.sort()
-
 
     d_key = lambda x: x
     if options.digits:
@@ -1084,14 +1119,16 @@ def stretcher(options):
     perm_multiplier = calc_perm_multiplier(len(words.sorted_words[1]), options.permutations)
 
 
-    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1, 1),\
+    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 0, 1),\
                             words=(words.sorted_words[1], words.totals[1], 0, (cap_size * leet_size * double)),\
                             digits=(d, d_total, 0, 1))
 
 
     # total possible output before trimming takes place
-    total_possible = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
+    total_possible = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) + len(words.sorted_words[1]) *\
         stretchers.words.multiplier * perm_multiplier) if words_processed else 0
+    #(max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
+    #    stretchers.words.multiplier * perm_multiplier) if words_processed else 0
 
 
     if options.target_time:
@@ -1117,7 +1154,7 @@ def stretcher(options):
 
 
     # total output after (optional) trimming
-    total_actual = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) *\
+    total_actual = (max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules)) + len(words.sorted_words[1]) *\
         stretchers.words.multiplier * perm_multiplier) if words_processed else 0
     #(max(1, len(words.sorted_words[1])) * max(1, len(d)) * max(1, len(rules.sorted_rules) + 1) * stretchers.words.multiplier) if words_processed else 0
 
