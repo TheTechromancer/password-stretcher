@@ -16,7 +16,7 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 			<li>Prepend "Pass00" and append "!!"</li>
 		</ol>
 	</li>
-	<li>Generates list of strings commonly occurring in the wordlist</li>
+	<li>Keeps track of commonly occurring strings in the wordlist</li>
   <li>Optionally applies leet / cap mutations to said strings</li>
   <li>Trims list entries with lower occurrence to match desired crack time</li>
 	<li>Outputs passwords (or optionally generates hashcat rules) based on combination of generated lists, mutations, and rules</li>
@@ -29,7 +29,7 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 ### Help:
 ~~~
 usage: stretcher.py [-h] [-w] [-r] [--report-size] [-n] [-hc DIR] [-t] [-p]
-                    [-s] [-d] [-g] [-L] [-c] [-C]
+                    [-s] [-d] [-g] [-L] [-c] [-C] [-dd] [-P INT]
 
 FETCH THE PASSWORD STRETCHER
 
@@ -50,6 +50,9 @@ optional arguments:
   -L, --leet            "leetspeak" mutations
   -c, --cap             common upper/lowercase variations
   -C, --capswap         all possible case combinations
+  -dd, --double         double each word (e.g. "Pass" --> "PassPass")
+  -P INT, --permutations INT
+                        Max permutation depth (careful! massive output)
 ~~~
 
 <br>
@@ -109,7 +112,7 @@ a_few_somewhat
 ### Example #2:
 ~~~
 $ head -n 1000000 rockyou.txt | ./stretcher.py --target-time 1 --report
-[+] 1,000,000 words processed  
+[+] 999,999 words processed  
 
 Top 25 Strings out of 463,571 (2.2% coverage)
 ===============================================
@@ -139,17 +142,19 @@ Top 25 Strings out of 463,571 (2.2% coverage)
             446 (0.0%):    c                             
             424 (0.0%):    nov                           
 
+[!] No digits to display.
+
 
 
 Top 25 Rules out of 33,146 (46.1% coverage)
-=============================================                                                                                                                                                
-         54,856 (12.0%):    [string]1                                                                                                                                                        
-         14,922 (3.3%):    [string]123                                                                                                                                                       
-         12,979 (2.8%):    [string]2                                                                                                                                                         
-         10,406 (2.3%):    [string]12                                                                                                                                                        
-          8,563 (1.9%):    [string]3                                                                                                                                                         
-          7,882 (1.7%):    [string]13                                                                                                                                                        
-          7,308 (1.6%):    [string]7                                                                                                                                                         
+=============================================
+         54,856 (12.0%):    [string]1                     
+         14,922 (3.3%):    [string]123                   
+         12,979 (2.8%):    [string]2                     
+         10,406 (2.3%):    [string]12                    
+          8,563 (1.9%):    [string]3                     
+          7,882 (1.7%):    [string]13                    
+          7,308 (1.6%):    [string]7                     
           6,574 (1.4%):    [string]11                    
           6,284 (1.4%):    [string]5                     
           5,754 (1.3%):    [string]22                    
@@ -170,7 +175,7 @@ Top 25 Rules out of 33,146 (46.1% coverage)
           4,281 (0.9%):    1[string]                     
 
 
-Words processed:                                             1,000,000
+Words processed:                                               999,999
 Possible combinations:                                  15,365,987,937
 Timeframe target:                                        3,600,000,000
 Actual combinations:                                     3,600,220,850
@@ -189,10 +194,13 @@ Hours at 1,000,000 pps:                                       1.00 hrs
 
 #### Notes:
 <ul>
+  <li>The output of stretcher.py won't necessary include all the entries from the wordlist.  The whole point is to generate probable words that AREN'T in the wordlist.</li>
+  <li>This tool is a useful option after traditional cracking methods have failed.  Please try and give it plenty of time to do its job.  I recommend specifying a target time, at which point it will inform you how much of the input list it was able to cover in the given timeframe.</li>
+  <li>This program attempts to predict the size of its output, but isn't always 100% accurate.  It will play it safe and estimate higher rather than lower, unless --permuatations are used, in which case it doesn't even try.</li>
   <li>I've made an effort to reduce duplicates in output.  A small number of duplicates will occur due to the nature of the algorithm, though.  Linux homies can simply | sort | uniq. ;)</li>
 	<li>Lots of RAM helps.  Be prepared for memory usage around five times the size of your input wordlist (plus some headroom for --cap, if included)</li>
   <li>
     Have a hunch?  Try the --digits or --strings options to inject your predictions into the output.  These options support both comma-separated strings, or a wordlist file.  Try adding --leet and/or --capswap for good measure. Example: <br>
-    `$ cat rockyou.txt | ./stretcher.py --strings evilcorp --leet --digits 2016,2017,2018`
+    `$ cat rockyou.txt | ./stretcher.py --strings evilcorp.txt --leet --digits '2016,2017,2018'`
   </li>
 </ul>
