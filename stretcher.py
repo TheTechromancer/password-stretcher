@@ -878,14 +878,14 @@ class ReadSTDIN():
 
 class StretchStat():
 
-    def __init__(self, rules=([], 0, 1), words=([], 0, 1), digits=([], 0, 1)):
+    def __init__(self, rules=([], 0, 1, False), words=([], 0, 1, False), digits=([], 0, 1, False)):
         '''
         each arg is a tuple in the format:
         (counts, total, multiplier)
         '''
-        self.rules  = ListStat(rules[0], rules[1], start=rules[2], multiplier=rules[3], friendly='rules')
-        self.words  = ListStat(words[0], words[1], start=words[2], multiplier=words[3], friendly='words')
-        self.digits = ListStat(digits[0], digits[1], start=digits[2], multiplier=digits[3], friendly='digits')
+        self.rules  = ListStat(rules[0], rules[1], multiplier=rules[2], friendly='rules', priority=rules[3])
+        self.words  = ListStat(words[0], words[1], multiplier=words[2], friendly='words', priority=words[3])
+        self.digits = ListStat(digits[0], digits[1], multiplier=digits[2], friendly='digits', priority=digits[3])
 
 
     def avg_percents(self):
@@ -916,18 +916,19 @@ class ListStat():
     them to match desired crack time.
     '''
 
-    def __init__(self, counts, total, start=0, multiplier=1, friendly=''):
+    def __init__(self, counts, total, multiplier=1, friendly='', priority=False):
 
         self.counts     = counts
         self.total      = total * multiplier    # total including duplicates and mutations (before trimming)
         self.current    = 0                     # current total including duplicates and mutations
                                                 # used for calculating percent only
         self.multiplier = multiplier            # multiplier to account for leet / cap mutations
-        self.number     = start                 # number - current total including mutations but not duplicates
+        self.number     = 0                     # number - current total including mutations but not duplicates
         self.percent    = 1000.0
         self.index      = 0                     # index - used for keeping track of place
 
         self.finished   = False
+        self.priority   = priority
 
         self.friendly   = friendly
 
@@ -1016,7 +1017,7 @@ def calc_max_inputs(stretchers, total_desired):
                 if not l.finished:
 
                     try:
-                        if left == 1 or is_smaller(l.percent, stretchers):
+                        if left == 1 or l.priority or is_smaller(l.percent, stretchers):
                             l.add_next()
 
                     except IndexError:
@@ -1028,23 +1029,6 @@ def calc_max_inputs(stretchers, total_desired):
                 break
 
 
-    '''
-    # fill up the empty space if we have any leftover room
-    if current_total < total_desired:
-        # count the number of 
-        current_totals = []
-        for l in stretchers:
-            if l.current:
-                current_totals.append(l.current)
-
-        if len(current_totals) > 0:
-            multiplier = total_desired / reduce(lambda x,y: x*y, current_totals)
-
-        for l in stretchers:
-            if l.current:
-                l.current = int(l.current * multiplier)
-    '''
-
 
 def calc_perm_multiplier(list_len, perm_depth):
 
@@ -1053,7 +1037,10 @@ def calc_perm_multiplier(list_len, perm_depth):
     for n in range(perm_depth-1):
         total.append(total[n] * (list_len-(n+1)))
 
-    return int(reduce(lambda x,y: x+y, total) / list_len)
+    try:
+        return int(reduce(lambda x,y: x+y, total) / list_len)
+    except ZeroDivisionError:
+        return 1
 
 
 
@@ -1119,9 +1106,9 @@ def stretcher(options):
     perm_multiplier = calc_perm_multiplier(len(words.sorted_words[1]), options.permutations)
 
 
-    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 0, 1),\
-                            words=(words.sorted_words[1], words.totals[1], 0, (cap_size * leet_size * double)),\
-                            digits=(d, d_total, 0, 1))
+    stretchers = StretchStat(rules=(rules.sorted_rules, rules.total, 1, False,),\
+                            words=(words.sorted_words[1], words.totals[1], (cap_size * leet_size * double), options.strings),\
+                            digits=(d, d_total, 1, options.digits))
 
 
     # total possible output before trimming takes place
