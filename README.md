@@ -181,7 +181,7 @@ Possible combinations:                                  15,365,987,937
 Timeframe target:                                        3,600,000,000
 Actual combinations:                                     3,600,220,850
 ======================================================================
-Overall coverage:                                               23.43%
+Stretched to:                                                   3,600x
 
 Coverage by type:
     words:          94.6% (415,490)
