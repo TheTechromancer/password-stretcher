@@ -17,10 +17,10 @@ It tries to avoid generating "improbable" passwords by preserving the natural en
 			<li>Prepend "Pass4" and append "!!"</li>
 		</ol>
 	</li>
-	<li>Keeps track of commonly occurring strings/digits in the wordlist</li>
+	<li>Keeps track of commonly occurring rules, strings, and digits in the wordlist</li>
   <li>Optionally applies leet / cap mutations to aforementioned strings</li>
-  <li>Trims less common word/digit/rule occurrences to match desired crack time</li>
-	<li>Generates passwords (or optionally, hashcat rules) based on combination of gathered lists, mutations, and rules</li>
+  <li>Trims less common occurrences in order to conform to desired crack time</li>
+	<li>Generates passwords (or optionally, hashcat resources) based on combination of gathered lists, mutations, and rules</li>
 </ol>
 
 
