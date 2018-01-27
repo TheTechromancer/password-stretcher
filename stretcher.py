@@ -31,6 +31,7 @@ max_leet        = 64            # max number of leet mutations per word
 max_cap         = 256           # max number of capitalization mutations per word
                                 # note: both of these are automatically increased
                                 # if there's still headroom afterwards
+max_complexity  = 5             # max number of "sections" per word, e.g. "Pass2!" == 3: (Pass, 2, !)
 
 report_limit    = 50            # maximum lines for each individual report
 
@@ -94,7 +95,7 @@ class RuleGen():
                 
             report.append('{:>15,} ({:.1f}%):    {:<30}'.format(rule_count, rule_coverage, rule_bytes.replace(string_delim, b'[string]').decode()))
 
-        return '\n'.join(report) + '\n'
+        return '\n'.join(report) + '\n\n'
 
 
 
@@ -132,7 +133,7 @@ class RuleGen():
 
 
 
-    def write_rules(self, filename):
+    def write_rules(self, filename, digit_list=[], d_key=lambda x: x):
         '''
         writes hashcat rules
         '''
@@ -147,8 +148,8 @@ class RuleGen():
 
                 if string_delim in rule[0]:
                     if self.custom_digits and digit_delim in rule[0]:
-                        for digit in self.custom_digits:
-                            self._write_rule(rule[0].replace(digit_delim, digit), f)
+                        for digit in digit_list:
+                            self._write_rule(rule[0].replace(digit_delim, d_key(digit)), f)
                     else:
                         self._write_rule(rule[0], f)
 
@@ -163,7 +164,7 @@ class RuleGen():
         num_groups = len(groups)
 
     # skip generating rules for overly simple or complex words
-        if num_groups == 1 or num_groups > 5:
+        if num_groups == 1 or num_groups > max_complexity:
             return
 
             '''
@@ -364,7 +365,7 @@ class WordGen():
                 occurance = (count / self.totals[chartype]) * 100
                 report.append('{:>15,} ({:.1f}%):    {:<30}'.format(count, occurance, string.decode()))
 
-        return '\n'.join(report) + '\n'
+        return '\n'.join(report) + '\n\n'
 
 
     def write(self, filename, digits=False):
@@ -1178,8 +1179,8 @@ def stretcher(options):
 
     # print reports
     if options.report or options.hashcat:
-        print(words.report(display_limit=options.report_size))
-        print(rules.report(display_limit=options.report_size))
+        report = words.report(display_limit=options.report_size) + rules.report(display_limit=options.report_size)
+        print(report)
         print('\nWords processed:       {:>47,}'.format(words_processed))
         print('Possible combinations: {:>47,}'.format(total_possible))
         if options.target_time:
@@ -1190,7 +1191,7 @@ def stretcher(options):
         try:
             stretched_to = int(total_actual / words_processed)
         except ZeroDivisionError:
-            stretched_to = 100
+            stretched_to = 1
         print('Stretched to:        {:>48,}x'.format(stretched_to))
 
         if options.target_time:
@@ -1235,7 +1236,7 @@ def stretcher(options):
 
         stderr.write('\r[+] Writing hashcat rules             ')
         if not options.no_pend:
-            rules.write_rules(rulename)
+            rules.write_rules(rulename, d, d_key)
             rulestr = ['-r', rulename]
         else:
             rulestr = []
