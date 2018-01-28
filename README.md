@@ -193,6 +193,18 @@ Hours at 1,000,000 pps:                                       1.00 hrs
 
 <br>
 
+
+### How effective is it?
+
+Pretty darn effective!  Here's a couple of simple examples.  Note that these did not use any of the mutations options such as --leet or --capswap.
+<br>
+When used to "stretch" the leaked PHPBB list (which is 184,389 lines long), it was able to crack 1,786,115 passwords from rockyou in under a minute.  That's a 969% increase from the input list.
+<br>
+Results were similar with the Battlefield list (419,374 lines), which was able to crack 2,253,393 passwords from rockyou.
+
+
+<br>
+
 #### Notes:
 <ul>
   <li>The output of stretcher.py won't necessary include all the entries from the wordlist.  The whole point is to generate probable words that AREN'T in the wordlist.</li>
