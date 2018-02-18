@@ -929,7 +929,7 @@ class ListStat():
         self.index      = 0                     # index - used for keeping track of place
 
         self.finished   = False
-        self.priority   = priority
+        self.priority   = priority             # if priority == True, don't trim (for user-supplied lists)
 
         self.friendly   = friendly
 
@@ -1377,8 +1377,8 @@ if __name__ == '__main__':
 
         options = parser.parse_args()
 
-        # print help if there's no arguments and no pipe to STDIN
-        if not options.strings and type(options.wordlist) == ReadSTDIN and stdin.isatty():
+        # print help if there's nothing to analyze
+        if type(options.wordlist) == ReadSTDIN and stdin.isatty():
             parser.print_help()
             stderr.write('\n [!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
