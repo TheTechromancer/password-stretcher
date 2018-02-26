@@ -1286,7 +1286,7 @@ def stretcher(options):
             
         for _ in source:
             if display_count and c % 1000 == 0:
-                stderr.write('\r[+] {:,} words written'.format(c))
+                stderr.write('\r[+] {:,} words written       '.format(c))
             try:
                 print(_.decode())
             except UnicodeDecodeError:
