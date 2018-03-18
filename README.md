@@ -208,7 +208,7 @@ Results were similar with the Battlefield list (419,374 lines), which was able t
 
 #### Notes:
 <ul>
-  <li>The output of stretcher.py won't necessary include all the entries from the wordlist.  The whole point is to generate probable words that AREN'T in the wordlist.</li>
+  <li>The output of stretcher.py won't necessarily include all the entries from the wordlist.  The whole point is to generate probable words that AREN'T in the wordlist.</li>
   <li>This tool is a useful option after traditional cracking methods have failed.  Please try and give it plenty of time to do its job.  I recommend specifying a target time, at which point it will inform you how much of the input list it was able to cover in the given timeframe.</li>
   <li>This program attempts to predict the size of its output, but isn't always 100% accurate.  It will play it safe and estimate higher rather than lower, unless --permuatations are used, in which case it doesn't even try.</li>
   <li>I've made an effort to reduce duplicates in output.  A small number of duplicates will occur due to the nature of the algorithm, though.  Linux homies can simply | sort | uniq. ;)</li>
