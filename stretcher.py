@@ -2,20 +2,20 @@
 
 '''
 
-stretcher.py
-
 by TheTechromancer
 
 TODO:
 
-    test despair debug rejoice repeat
+    debug stretcher() function
+        - oof, it's a mess
+        - turn into function?
+
+    get rid of global variables
+        - yuck
 
 '''
 
-
 import itertools
-from copy import copy
-from time import sleep
 from pathlib import Path
 from statistics import mean
 from functools import reduce
@@ -23,11 +23,12 @@ from os import name as os_type
 from sys import argv, exit, stdin, stderr, stdout
 from argparse import ArgumentParser, FileType, ArgumentError
 
+
 ### DEFAULTS ###
 
 leet_chars      = (b'013578@$') # characters to consider "leet"
 
-max_leet        = 64            # max number of leet mutations per word
+max_leet        = 128           # max number of leet mutations per word
 max_cap         = 256           # max number of capitalization mutations per word
                                 # note: both of these are automatically increased
                                 # if there's still headroom afterwards
@@ -566,85 +567,72 @@ class Mutator():
 
                 self.cur_leet += self.max_leet
 
-                results = set() # list is almost 4 times faster than set
                 num_results = 0
 
-                gen_common = self._leet(word, swap_values=self.leet_common)
+                gen_common = self._leet(word, swap_values=self.leet_all)
                 for r in gen_common:
                     if r != word:
                         if self.cur_leet <= 0:
                             break
-                        results.add(r)
                         self.cur_leet -= 1
                         yield r
 
-                gen_sparse = self._leet(word, swap_values=self.leet_all)
-                for r in gen_sparse:
-                    if r != word:
-                        if self.cur_leet <= 0:
-                            break
-                        results.add(r)
-                        self.cur_leet -= 1
-                        yield r
+                #gen_sparse = self._leet(word, swap_values=self.leet_all)
+                #for r in gen_sparse:
+                #    if r != word:
+                #        if self.cur_leet <= 0:
+                #            break
+                #        results.add(r)
+                #        self.cur_leet -= 1
+                #        yield r
+
+                self.cur_leet += (self.max_leet)
 
 
-                self.cur_leet += (self.max_leet - len(results))
-
-
-
-    def _cap(self, word, swap=True):
-        '''
-        takes:      iterable containing words
-        yields:     case variations (common only, unless 'all' is specified)
-        '''
-
-        # set type used to prevent duplicates
-        results = []
-        for r in [word, word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
-            if r not in results:
-                results.append(r)
-                yield r
+    def _cap(self, word):
 
         if self.do_capswap:
 
-            '''
-            # oneliner which basically does it all
-            # but, upon further quality testing, slow as heckkk
-            for r in map(bytes, itertools.product(*zip(word.lower(), word.upper()))):
-                if r != word and not r in results:
+            # many recursions make light work
+            if len(word) == 1:
+                yield word
+                if word.isalpha():
+                    yield word.swapcase()
+
+            else:
+                mid_point = int(len(word)/2)
+                for right_half in self._cap(word[mid_point:]):
+                    for left_half in self._cap(word[:mid_point]):
+                        yield left_half + right_half
+
+        else:
+
+            results = []
+            for r in [word, word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
+                if r not in results:
                     results.append(r)
                     yield r
-            '''
 
-            # here down is new & experimental
-            word_list = list(word.lower())
 
-            # count number of alpha characters in word
-            num_alpha = 0
-            for i in range(len(word)):
-                if word[i:i+1].isalpha():
-                    num_alpha += 1
 
-            b = 0
-            # mirroring the iterative binary representation of a number whose bitlength is equal to the number of alpha characters in the word
-            # too much alcohol
-            for i in range(pow(num_alpha, 2)):
-                new_word = word_list.copy()
+    def _leet(self, word, swap_values=None):
 
-                for bit in range(len(word)):
-                    if not word[bit:bit+1].isalpha():
-                        continue
+        if not swap_values:
+            swap_values = self.leet_all
 
-                    if i & 1 << bit:
-                        # capitalize
-                        new_word[bit] -= 32
+        if len(word) == 1:
+            yield word
+            try:
+                for leet_char in swap_values[word]:
+                    yield leet_char
+            except KeyValue:
+                pass
 
-                new_word = bytes(new_word)
-
-                if new_word not in results:
-                    results.append(new_word)
-                    yield new_word
-
+        else:
+            mid_point = int(len(word)/2)
+            for right_half in self._leet(word[mid_point:], swap_values=swap_values):
+                for left_half in self._leet(word[:mid_point], swap_values=swap_values):
+                    yield left_half + right_half
 
 
 
@@ -653,12 +641,12 @@ class Mutator():
 
         new_dict = {}
         for key in d:
-            new_dict[ord(key)] = [ord(v) for v in d[key]]
+            new_dict[key.encode('utf-8')] = [v.encode('utf-8') for v in d[key]]
         return new_dict
 
 
 
-    def _leet(self, word, swap_values=None):
+    def _le3t(self, word, swap_values=None):
         '''
         takes:      iterable containing words
                     swap_values: dictionary containing leet swaps
