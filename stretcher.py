@@ -561,21 +561,19 @@ class Mutator():
 
         for word in in_list:
 
-            yield word
+            gen_common = self._leet(word, swap_values=self.leet_all)
+            yield next(gen_common)
 
             if self.do_leet:
 
                 self.cur_leet += self.max_leet
-
                 num_results = 0
 
-                gen_common = self._leet(word, swap_values=self.leet_all)
                 for r in gen_common:
-                    if r != word:
-                        if self.cur_leet <= 0:
-                            break
-                        self.cur_leet -= 1
-                        yield r
+                    self.cur_leet -= 1
+                    if self.cur_leet <= 0:
+                        break
+                    yield r
 
                 #gen_sparse = self._leet(word, swap_values=self.leet_all)
                 #for r in gen_sparse:
@@ -586,7 +584,7 @@ class Mutator():
                 #        self.cur_leet -= 1
                 #        yield r
 
-                self.cur_leet += (self.max_leet)
+                self.cur_leet += self.max_leet
 
 
     def _cap(self, word):
@@ -625,13 +623,13 @@ class Mutator():
             try:
                 for leet_char in swap_values[word]:
                     yield leet_char
-            except KeyValue:
+            except KeyError:
                 pass
 
         else:
             mid_point = int(len(word)/2)
-            for right_half in self._leet(word[mid_point:], swap_values=swap_values):
-                for left_half in self._leet(word[:mid_point], swap_values=swap_values):
+            for left_half in self._leet(word[:mid_point], swap_values=swap_values):
+                for right_half in self._leet(word[mid_point:], swap_values=swap_values):
                     yield left_half + right_half
 
 
