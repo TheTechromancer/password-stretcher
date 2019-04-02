@@ -8,7 +8,7 @@ TODO:
 
     debug stretcher() function
         - oof, it's a mess
-        - turn into function?
+        - turn into class?
 
     get rid of global variables
         - yuck
