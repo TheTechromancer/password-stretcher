@@ -584,7 +584,7 @@ class Mutator():
                 #        self.cur_leet -= 1
                 #        yield r
 
-                self.cur_leet += self.max_leet
+                #self.cur_leet += self.max_leet
 
 
     def _cap(self, word):
