@@ -597,23 +597,27 @@ class Mutator():
                 results.append(r)
                 yield r
 
-
         # then move on to full cap mutations if requested
         if self.do_capswap:
+            for r in self._capswap(word):
+                if not r in results:
+                    yield r
 
-            # many recursions make light work
-            if len(word) == 1:
-                yield word
-                if word.isalpha():
-                    yield word.swapcase()
 
-            else:
-                mid_point = int(len(word)/2)
-                for right_half in self._cap(word[mid_point:]):
-                    for left_half in self._cap(word[:mid_point]):
-                        r = left_half + right_half
-                        if not r in results:
-                            yield r
+
+    def _capswap(self, word):
+
+         # many recursions make light work
+        if len(word) == 1:
+            yield word
+            if word.isalpha():
+                yield word.swapcase()
+
+        else:
+            mid_point = int(len(word)/2)
+            for right_half in self._capswap(word[mid_point:]):
+                for left_half in self._capswap(word[:mid_point]):
+                    yield left_half + right_half
 
 
 
