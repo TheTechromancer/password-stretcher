@@ -589,6 +589,16 @@ class Mutator():
 
     def _cap(self, word):
 
+
+        # always yield the most likely candidates first
+        results = []
+        for r in [word, word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
+            if r not in results:
+                results.append(r)
+                yield r
+
+
+        # then move on to full cap mutations if requested
         if self.do_capswap:
 
             # many recursions make light work
@@ -601,15 +611,9 @@ class Mutator():
                 mid_point = int(len(word)/2)
                 for right_half in self._cap(word[mid_point:]):
                     for left_half in self._cap(word[:mid_point]):
-                        yield left_half + right_half
-
-        else:
-
-            results = []
-            for r in [word, word.lower(), word.upper(), word.swapcase(), word.capitalize(), word.title()]:
-                if r not in results:
-                    results.append(r)
-                    yield r
+                        r = left_half + right_half
+                        if not r in results:
+                            yield r
 
 
 
