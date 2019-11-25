@@ -17,7 +17,9 @@ class ReadFile():
 
         with open(self.filename, 'rb') as f:
             for line in f:
-                yield line.strip(b'\r\n')
+                line = line.strip(b'\r\n')
+                if line:
+                    yield line
 
 
 
@@ -28,6 +30,30 @@ class ReadSTDIN():
         while 1:
             line = stdin.buffer.readline()
             if line:
-                yield line.strip(b'\r\n')
+                line = line.strip(b'\r\n')
+                if line:
+                    yield line
             else:
                 break
+
+
+
+def bytes_to_human(_bytes):
+
+    sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
+    units = {}
+    count = 0
+    for size in sizes:
+        units[size] = pow(1024, count)
+        count +=1
+
+    for size in sizes:
+        if abs(_bytes) < 1024.0:
+            if size == sizes[0]:
+                _bytes = str(int(_bytes))
+            else:
+                _bytes = '{:.2f}'.format(_bytes)
+            return '{}{}'.format(_bytes, size)
+        _bytes /= 1024
+
+    raise ValueError

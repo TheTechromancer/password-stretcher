@@ -6,6 +6,7 @@ by TheTechromancer
 
 '''
 
+from time import sleep
 from lib.utils import *
 from pathlib import Path
 from lib.mangler import *
@@ -20,29 +21,35 @@ from argparse import ArgumentParser, FileType, ArgumentError
 
 def stretcher(options):
 
-    # (self, in_list, double=0, perm=0, leet=False, cap=False, capswap=False, key=lambda x: x):
-
     show_written_count = not stdout.isatty()
     written_count = 0
 
-    for mangled_word in Mangler(
-            in_list=options.wordlist,
-            double=options.double,
-            perm=options.permutations,
-            leet=options.leet,
-            cap=options.cap,
-            capswap=options.capswap,
-        ):
+    mangler = Mangler(
+        in_list=options.wordlist,
+        double=options.double,
+        perm=options.permutations,
+        leet=options.leet,
+        cap=options.cap,
+        capswap=options.capswap,
+    )
 
-        stdout.buffer.write(mangled_word)
+    estimated_output_size = (mangler.average_word_size+1) * len(mangler)
+    stderr.write(f'[+] Estimated output: {len(mangler):,} words ({bytes_to_human(estimated_output_size)})\n')
+    sleep(2)
+
+    for mangled_word in mangler:
+
+        stdout.buffer.write(mangled_word + b'\n')
         if show_written_count and written_count % 1000 == 0:
             stderr.write('\r[+] {:,} words written'.format(written_count))
 
-        print('')
         written_count += 1
 
     if show_written_count:
         stderr.write('\r[+] {:,} words written\n'.format(written_count))
+
+    stdout.buffer.flush()
+    stdout.close()
 
 
 
@@ -67,7 +74,7 @@ if __name__ == '__main__':
         # print help if there's nothing to analyze
         if type(options.wordlist) == ReadSTDIN and stdin.isatty():
             parser.print_help()
-            stderr.write('\n [!] Please specify wordlist or pipe to STDIN\n')
+            stderr.write('\n\n[!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
 
         stretcher(options)
@@ -79,6 +86,8 @@ if __name__ == '__main__':
     except AssertionError as e:
         stderr.write("\n[!] {}\n".format(str(e)))
         exit(1)
+    except (BrokenPipeError, IOError):
+        pass
     except KeyboardInterrupt:
         stderr.write("\n[!] Program interrupted.\n")
         exit(2)

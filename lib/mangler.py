@@ -44,7 +44,17 @@ class Mangler():
             'T': ['7']
         })
 
-        self.in_list        = in_list
+        total_words         = 0
+        total_word_size     = 0
+
+        # load input list into memory and deduplicate
+        self.in_list = set()
+        for word in in_list:
+            total_words += 1
+            total_word_size += len(word)
+            self.in_list.add(key(word))
+
+        self.average_word_size = total_word_size / total_words
 
         # max_* = maximum mutations per word
         # cur_* = used for carrying over unused mutations into next iteration
@@ -57,9 +67,7 @@ class Mangler():
         self.do_leet        = leet
         self.do_capswap     = capswap
         self.do_cap         = cap or capswap
-        self.double         = double
-
-        self.key            = key
+        self.do_double      = double
 
 
 
@@ -74,6 +82,28 @@ class Mangler():
             yield word
 
 
+    def __len__(self):
+        '''
+        Estimates the total output length based on requested mangling parameters
+        '''
+
+        length = len(self.in_list)
+        if self.perm_depth > 1:
+            initial_length = int(length)
+            for i in range(1, self.perm_depth+1):
+                length += initial_length ** i
+        elif self.do_double:
+            length *= 2
+        if self.do_leet:
+            length *= self.max_leet
+        if self.do_capswap:
+            length *= self.max_cap
+        elif self.do_cap:
+            length *= 4
+
+        return length
+
+
     def perm(self):
         '''
         permutates words from iterable
@@ -82,21 +112,16 @@ class Mangler():
         '''
 
         if self.perm_depth > 1:
-
-            words = [ self.key(w) for w in self.in_list ]
-
             for d in range(1, self.perm_depth+1):
-                for p in itertools.product(words, repeat=d):
+                for p in itertools.product(self.in_list, repeat=d):
                     yield b''.join(p)
 
         else:
             for word in self.in_list:
 
-                word = self.key(word)
-
                 yield word
 
-                if self.double:
+                if self.do_double:
                     yield word + word
 
 
@@ -140,7 +165,7 @@ class Mangler():
 
 
 
-    def _leet(self, word, swap_values=None):
+    def _leet(self, word, swap_values=None, end=0):
 
         if not swap_values:
             swap_values = self.leet_all
@@ -155,9 +180,14 @@ class Mangler():
 
         else:
             mid_point = int(len(word)/2)
-            for right_half in self._leet(word[mid_point:], swap_values=swap_values):
-                for left_half in self._leet(word[:mid_point], swap_values=swap_values):
-                    yield left_half + right_half
+            if end == 0:
+                for right_half in self._leet(word[mid_point:], swap_values=swap_values, end=end^1):
+                    for left_half in self._leet(word[:mid_point], swap_values=swap_values, end=end^1):
+                        yield left_half + right_half
+            else:
+                for left_half in self._leet(word[:mid_point], swap_values=swap_values, end=end^1):
+                    for right_half in self._leet(word[mid_point:], swap_values=swap_values, end=end^1):
+                        yield left_half + right_half
 
 
 
@@ -204,50 +234,3 @@ class Mangler():
         for key in d:
             new_dict[key.encode('utf-8')] = [v.encode('utf-8') for v in d[key]]
         return new_dict
-
-
-
-    def _le3t(self, word, swap_values=None):
-        '''
-        takes:      iterable containing words
-                    swap_values: dictionary containing leet swaps
-                    passthrough: whether or not to yield unmodified word
-        yields:     leet mutations, not exceeding max_results per word
-        '''
-
-        if not swap_values:
-            swap_values = self.leet_all
-
-        swaps = []
-        word_length = len(word)
-
-        for i in range(word_length):
-            try:
-                for l in swap_values[word[i]]:
-                    swaps.append((i, l))
-
-            except KeyError:
-                continue
-
-        num_swaps_range = range(len(swaps))
-        word_list = list(word)
-
-
-        for num_swaps in num_swaps_range:
-
-            for c in itertools.combinations(num_swaps_range, num_swaps+1):
-
-                try:
-
-                    new_word = word_list.copy()
-                    already_swapped = []
-
-                    for n in c:
-                        assert not swaps[n][0] in already_swapped
-                        new_word[swaps[n][0]] = swaps[n][1]
-                        already_swapped.append(swaps[n][0])
-
-                    yield bytes(new_word)
-
-                except AssertionError:
-                    continue
