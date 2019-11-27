@@ -2,6 +2,7 @@
 
 # by TheTechromancer
 
+import string
 from sys import stdin
 
 
@@ -39,6 +40,10 @@ class ReadSTDIN():
 
 
 def bytes_to_human(_bytes):
+    '''
+    converts bytes to human-readable filesize
+    e.g. 1024 --> 1KB
+    '''
 
     sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
     units = {}
@@ -57,3 +62,24 @@ def bytes_to_human(_bytes):
         _bytes /= 1024
 
     raise ValueError
+
+
+def human_to_bytes(human):
+    '''
+    converts human-readable filesize to bytes
+    e.g. 1KB --> 1024
+    '''
+
+    if type(human) == int:
+        return human
+
+    units = {'': 1, 'B': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4, 'PB': 1024**5, 'EB': 1024**6, 'ZB': 1024**7}
+
+    try:
+        human = human.upper().strip()
+        i = float(''.join(c for c in human if c in string.digits + '.'))
+        unit = ''.join([c for c in human if c in string.ascii_uppercase])
+    except (ValueError, KeyError):
+        raise ValueError(f'Invalid filesize "{human}"')
+
+    return int(i * units[unit])
