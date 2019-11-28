@@ -39,6 +39,52 @@ class ReadSTDIN():
 
 
 
+def int_to_human(i):
+    '''
+    shortens large integer to human-readable format
+    e.g. 1000 --> 1K
+    '''
+
+    sizes = ['', 'K', 'M', 'B', 'T']
+    units = {}
+    count = 0
+    for size in sizes:
+        units[size] = pow(1000, count)
+        count +=1
+
+    for size in sizes:
+        if abs(i) < 1000.0:
+            if size == sizes[0]:
+                i = str(int(i))
+            else:
+                i = '{:.2f}'.format(i)
+            return '{}{}'.format(i, size)
+        i /= 1000
+
+    raise ValueError
+
+
+def human_to_int(h):
+    '''
+    converts human-readable number to integer
+    e.g. 1K --> 1000
+    '''
+
+    if type(h) == int:
+        return h
+
+    units = {'': 1, 'K': 1000, 'M': 1000**2, 'B': 1000**3, 'T': 1000**4}
+
+    try:
+        h = h.upper().strip()
+        i = float(''.join(c for c in h if c in string.digits + '.'))
+        unit = ''.join([c for c in h if c in string.ascii_uppercase])
+    except (ValueError, KeyError):
+        raise ValueError(f'Invalid filesize "{h}"')
+
+    return int(i * units[unit])
+
+
 def bytes_to_human(_bytes):
     '''
     converts bytes to human-readable filesize
@@ -62,24 +108,3 @@ def bytes_to_human(_bytes):
         _bytes /= 1024
 
     raise ValueError
-
-
-def human_to_bytes(human):
-    '''
-    converts human-readable filesize to bytes
-    e.g. 1KB --> 1024
-    '''
-
-    if type(human) == int:
-        return human
-
-    units = {'': 1, 'B': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4, 'PB': 1024**5, 'EB': 1024**6, 'ZB': 1024**7}
-
-    try:
-        human = human.upper().strip()
-        i = float(''.join(c for c in human if c in string.digits + '.'))
-        unit = ''.join([c for c in human if c in string.ascii_uppercase])
-    except (ValueError, KeyError):
-        raise ValueError(f'Invalid filesize "{human}"')
-
-    return int(i * units[unit])

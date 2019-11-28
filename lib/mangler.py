@@ -3,12 +3,11 @@
 # by TheTechromancer
 
 import itertools
-from .utils import human_to_bytes
 
 
 class Mangler():
 
-    def __init__(self, in_list, double=0, perm=0, leet=False, cap=False, capswap=False, key=lambda x: x):
+    def __init__(self, in_list, output_size=None, double=0, perm=0, leet=False, cap=False, capswap=False, key=lambda x: x):
 
         # "leet" character swaps - modify as needed.
         # Keys are replaceable characters; values are their leet replacements.
@@ -22,8 +21,10 @@ class Mangler():
             'I': ['1'],
             'o': ['0'],
             'O': ['0'],
-            's': ['$'],
-            'S': ['$'],
+            's': ['5', '$'],
+            'S': ['5', '$'],
+            't': ['7'],
+            'T': ['7']
         })
 
         self.leet_all = self._dict_str_to_bytes({
@@ -52,9 +53,10 @@ class Mangler():
         self.in_list = set()
         for word in in_list:
             total_words += 1
-            # +1 for newline
-            total_word_size += len(word)+1
+            total_word_size += len(word)
             self.in_list.add(key(word))
+        self.in_list = list(self.in_list)
+        self.in_list.sort(key=lambda x: len(x))
 
         # max_* = maximum mutations per word
         # cur_* = used for carrying over unused mutations into next iteration
@@ -63,13 +65,21 @@ class Mangler():
         self.cur_leet       = 0
         self.cur_cap        = 0
 
+        # the average number of words produced by the cap() (not capswap)
+        self.cap_multiplier = 4
+
         self.perm_depth     = perm
         self.do_leet        = leet
         self.do_capswap     = capswap
         self.do_cap         = cap or capswap
         self.do_double      = double
 
-        self._average_word_size = total_word_size / total_words
+        if not output_size:
+            self.set_output_size(max(len(self)*1000, 100000000))
+        else:
+            self.set_output_size(output_size)
+
+        self._average_word_length = total_word_size / total_words
 
 
 
@@ -96,9 +106,9 @@ class Mangler():
         if self.do_capswap:
             length *= self.max_cap
         elif self.do_cap:
-            length *= 4
+            length *= self.cap_multiplier
 
-        return length
+        return int(length)
 
 
     def perm(self):
@@ -146,19 +156,21 @@ class Mangler():
 
         for word in in_list:
 
-            gen_common = self._leet(word, swap_values=self.leet_all)
+            self.cur_leet += self.max_leet
+
+            gen_common = self._leet(word, swap_values=self.leet_common)
             yield next(gen_common)
+            self.cur_leet -= 1
 
-            if self.do_leet:
+            if self.do_leet and self.cur_leet > 0:
 
-                self.cur_leet += self.max_leet
                 num_results = 0
 
                 for r in gen_common:
+                    yield r
                     self.cur_leet -= 1
                     if self.cur_leet <= 0:
                         break
-                    yield r
 
 
 
@@ -228,10 +240,9 @@ class Mangler():
         sets self.max_cap and self.max_leet based on desired output size
         '''
 
-        target_size = human_to_bytes(target_size)
-        target_word_count = int(target_size / self.average_word_size)
+        self.output_size = target_size
 
-        multiplier = target_word_count / self.input_length
+        multiplier = target_size / self.input_length
 
         if self.do_capswap and self.do_leet:
             multiplier = (multiplier / 2) ** (1 / 2)
@@ -239,7 +250,7 @@ class Mangler():
             self.max_leet = max(1, int(multiplier))
 
         elif self.do_cap and self.do_leet:
-            self.max_leet = int(multiplier / 4)
+            self.max_leet = int(multiplier / self.cap_multiplier)
 
         elif self.do_capswap:
             self.max_cap = max(1, int(multiplier))
@@ -257,6 +268,14 @@ class Mangler():
         return new_dict
 
 
+
+    @property
+    def average_input_word_length(self):
+        
+        return (self.input_size / self.input_length)
+
+
+
     @property
     def input_length(self):
 
@@ -271,33 +290,3 @@ class Mangler():
             length *= 2
 
         return length
-
-
-    @property
-    def average_word_size(self):
-
-        return self.input_size / self.input_length
-
-
-    @property
-    def input_size(self):
-
-        total_size = len(self.in_list) * self._average_word_size
-
-        if self.perm_depth > 1:
-            initial_length = len(self.in_list)
-            word_size = self._average_word_size
-            for i in range(2, self.perm_depth+1):
-                num_lines = initial_length ** i
-                total_size += num_lines * i * self._average_word_size
-
-        elif self.do_double:
-            total_size *= 3
-
-        return total_size
-
-
-    @property
-    def output_size(self):
-
-        return self.average_word_size * len(self)

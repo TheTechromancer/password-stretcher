@@ -8,13 +8,9 @@ by TheTechromancer
 
 from time import sleep
 from lib.utils import *
-from pathlib import Path
 from lib.mangler import *
-from statistics import mean
-from functools import reduce
-from os import name as os_type
-from sys import argv, exit, stdin, stderr, stdout
-from argparse import ArgumentParser, FileType, ArgumentError
+from sys import exit, stdin, stderr, stdout
+from argparse import ArgumentParser, ArgumentError
 
 
 
@@ -24,40 +20,42 @@ def stretcher(options):
     show_written_count = not stdout.isatty()
     written_count = 0
 
+    stderr.write('[+] Reading input wordlist...')
     mangler = Mangler(
-        in_list=options.wordlist,
+        in_list=options.input,
+        output_size=options.limit,
         double=options.double,
         perm=options.permutations,
         leet=options.leet,
         cap=options.cap,
         capswap=options.capswap,
     )
-
-    if options.target_size:
-        stderr.write(f'[+] Requested output size: {bytes_to_human(options.target_size)} (approximately {int(options.target_size / (mangler.average_word_size)):,} words)\n')
-        mangler.set_output_size(options.target_size)
-        stderr.write(f'    - input size:            {len(mangler.in_list):,} words\n')
-        stderr.write(f'    - average word length:   {mangler._average_word_size:.2f}\n')
-        if mangler.perm_depth > 1:
-            stderr.write(f'    - with permutations:     {mangler.average_word_size:.2f}\n')
+    stderr.write(f' read {len(mangler.in_list):,} words.\n')
+    stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
+    if any([mangler.do_leet, mangler.do_cap]):
+        stderr.write('[+] Mutations allowed per word:\n')
         if mangler.do_leet:
-            stderr.write(f'    - max_leet:              {mangler.max_leet:,}\n')
+            stderr.write(f'     - leet:           {mangler.max_leet:,}\n')
         if mangler.do_capswap:
-            stderr.write(f'    - max_cap:               {mangler.max_cap:,}\n')
+            stderr.write(f'     - capitalization: {mangler.max_cap:,}\n')
+        elif mangler.do_cap:
+            stderr.write(f'     - capitalization: 6\n')
 
-    stderr.write(f'[+] Estimated output: {len(mangler):,} words ({bytes_to_human(mangler.output_size)})\n')
-    sleep(3)
+    #stderr.write(f'[+] Estimated output: {len(mangler):,} words\n')
 
+    bytes_written = 0
     for mangled_word in mangler:
 
         stdout.buffer.write(mangled_word + b'\n')
-        if show_written_count and written_count % 1000 == 0:
-            stderr.write('\r[+] {:,} words written'.format(written_count))
+        bytes_written += (len(mangled_word)+1
+            )
+        if show_written_count and written_count % 10000 == 0:
+            stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    ')
 
         written_count += 1
 
     if show_written_count:
-        stderr.write('\r[+] {:,} words written\n'.format(written_count))
+        stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    \n')
 
     stdout.buffer.flush()
     stdout.close()
@@ -70,21 +68,21 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description="FETCH THE PASSWORD STRETCHER")
 
-    parser.add_argument('-r',       '--wordlist',       type=ReadFile,    default=ReadSTDIN(),      help="wordlist to analyze / stretch (default: STDIN)", metavar='')
+    parser.add_argument('-i',       '--input',          type=ReadFile,    default=ReadSTDIN(),      help="wordlist to stretch (default: STDIN)", metavar='')
     parser.add_argument('-L',       '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
     parser.add_argument('-c',       '--cap',            action='store_true',                        help="common upper/lowercase variations")
     parser.add_argument('-C',       '--capswap',        action='store_true',                        help="all possible case combinations")
     parser.add_argument('-dd',      '--double',         action='store_true',                        help="double each word (e.g. \"Pass\" --> \"PassPass\")")
     parser.add_argument('-P',       '--permutations',   type=int,               default=1,          help="max permutation depth (careful! massive output)", metavar='INT')
-    parser.add_argument('-s',       '--target-size',    type=human_to_bytes,                        help="limit size of output wordlist")
+    parser.add_argument('--limit',                      type=human_to_int,                          help="limit length of output (default: max(100M, 1000x input))")
 
 
     try:
 
         options = parser.parse_args()
 
-        # print help if there's nothing to analyze
-        if type(options.wordlist) == ReadSTDIN and stdin.isatty():
+        # print help if there's nothing to stretch
+        if type(options.input) == ReadSTDIN and stdin.isatty():
             parser.print_help()
             stderr.write('\n\n[!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
@@ -98,8 +96,6 @@ if __name__ == '__main__':
     except AssertionError as e:
         stderr.write("\n[!] {}\n".format(str(e)))
         exit(1)
-    except (BrokenPipeError, IOError):
-        pass
     except KeyboardInterrupt:
-        stderr.write("\n[!] Program interrupted.\n")
+        stderr.write("\n[!] Interrupted.\n")
         exit(2)
