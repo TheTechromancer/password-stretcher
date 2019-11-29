@@ -79,7 +79,11 @@ class Mangler():
         else:
             self.set_output_size(output_size)
 
-        self._average_word_length = total_word_size / total_words
+        try:
+            self._average_word_length = total_word_size / total_words
+        except ArithmeticError:
+            self._average_word_length = 8
+
 
 
 
@@ -289,4 +293,8 @@ class Mangler():
         elif self.do_double:
             length *= 2
 
-        return length
+        # prevent division by zero
+        if length > 0:
+            return length
+        else:
+            return 1

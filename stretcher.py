@@ -8,10 +8,11 @@ by TheTechromancer
 
 from time import sleep
 from lib.utils import *
+from lib.errors import *
 from lib.mangler import *
+from lib.spider import Spider
 from sys import exit, stdin, stderr, stdout
 from argparse import ArgumentParser, ArgumentError
-
 
 
 
@@ -66,16 +67,16 @@ if __name__ == '__main__':
 
     ### ARGUMENTS ###
 
-    parser = ArgumentParser(description="FETCH THE PASSWORD STRETCHER")
+    parser = ArgumentParser(description='FETCH THE PASSWORD STRETCHER')
 
-    parser.add_argument('-i',       '--input',          type=ReadFile,    default=ReadSTDIN(),      help="wordlist to stretch (default: STDIN)", metavar='')
-    parser.add_argument('-L',       '--leet',           action='store_true',                        help="\"leetspeak\" mutations")
-    parser.add_argument('-c',       '--cap',            action='store_true',                        help="common upper/lowercase variations")
-    parser.add_argument('-C',       '--capswap',        action='store_true',                        help="all possible case combinations")
-    parser.add_argument('-dd',      '--double',         action='store_true',                        help="double each word (e.g. \"Pass\" --> \"PassPass\")")
-    parser.add_argument('-P',       '--permutations',   type=int,               default=1,          help="max permutation depth (careful! massive output)", metavar='INT')
-    parser.add_argument('--limit',                      type=human_to_int,                          help="limit length of output (default: max(100M, 1000x input))")
-
+    parser.add_argument('-i',       '--input',          type=read_uri,    default=ReadSTDIN(),      help='input website or wordlist (default: STDIN)', metavar='')
+    parser.add_argument('-L',       '--leet',           action='store_true',                        help='"leetspeak" mutations')
+    parser.add_argument('-c',       '--cap',            action='store_true',                        help='common upper/lowercase variations')
+    parser.add_argument('-C',       '--capswap',        action='store_true',                        help='all possible case combinations')
+    parser.add_argument('-dd',      '--double',         action='store_true',                        help='double each word (e.g. "Pass" --> "PassPass")')
+    parser.add_argument('-P',       '--permutations',   type=int,               default=1,          help='max permutation depth (careful! massive output)', metavar='INT')
+    parser.add_argument('--limit',                      type=human_to_int,                          help='limit length of output (default: max(100M, 1000x input))')
+    parser.add_argument('--spider-depth',               type=int,               default=1,          help='maximum website spider depth (default: 1)')
 
     try:
 
@@ -87,15 +88,21 @@ if __name__ == '__main__':
             stderr.write('\n\n[!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
 
+        elif type(options.input) == Spider:
+            options.input.depth = options.spider_depth
+            options.input.start()
+
         stretcher(options)
 
-
+    except PasswordStretcherError as e:
+        stderr.write(f'\n[!] {e}\n')
+        exit(1)
     except ArgumentError:
-        stderr.write("\n[!] Check your syntax. Use -h for help.\n")
+        stderr.write('\n[!] Check your syntax. Use -h for help.\n')
         exit(2)
     except AssertionError as e:
-        stderr.write("\n[!] {}\n".format(str(e)))
+        stderr.write('\n[!] {}\n'.format(str(e)))
         exit(1)
     except KeyboardInterrupt:
-        stderr.write("\n[!] Interrupted.\n")
+        stderr.write('\n[!] Interrupted.\n')
         exit(2)

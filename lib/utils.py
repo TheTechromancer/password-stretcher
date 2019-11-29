@@ -4,6 +4,18 @@
 
 import string
 from sys import stdin
+from pathlib import Path
+from urllib.parse import urlparse
+from .errors import InputListError
+
+
+def read_uri(uri):
+
+    if any(uri.startswith(x) for x in ['http://', 'https://']):
+        from .spider import Spider
+        return Spider(uri)
+    else:
+        return ReadFile(uri)
 
 
 class ReadFile():
@@ -11,7 +23,10 @@ class ReadFile():
     def __init__(self, filename):
 
         self.filename = str(filename)
-        assert(Path(self.filename).is_file()), 'Cannot find the file {}'.format(self.filename)
+
+        if not Path(self.filename).is_file():
+            raise InputListError(f'Cannot find the file {self.filename}.  use "https://", for website')
+
 
 
     def __iter__(self):
@@ -108,3 +123,25 @@ def bytes_to_human(_bytes):
         _bytes /= 1024
 
     raise ValueError
+
+
+
+def hostname_to_domain(hostname):
+
+    hostname = hostname.lower().split('.')
+    try:
+        if hostname[-2] == 'co':
+            return '.'.join(hostname[-3:])
+        else:
+            return '.'.join(hostname[-2:])
+    except IndexError:
+        return '.'.join(hostname)
+
+
+
+def url_to_domain(url):
+
+    try:
+        return hostname_to_domain(urlparse(url).hostname).lower()
+    except AttributeError:
+        raise ValueError(f'Invalid URL: {url}')
