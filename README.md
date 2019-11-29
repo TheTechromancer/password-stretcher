@@ -34,7 +34,7 @@ optional arguments:
 
 <br>
 
-## Example: Create a large wordlist from only a few words
+## Example 1: Create a list of 666,672 passwords (9.01MB) from only three words
 ~~~
 $ echo -e 'normal\nenglish\nwords' | ./stretcher.py --leet --capswap --permutations 2
 [+] Reading input wordlist... read 3 words.
@@ -72,7 +72,7 @@ normalnormal
 ...
 ~~~
 
-## Example: Create a 10-million-word list from a website
+## Example 2: Create a 10-million-word list from a website
 ~~~
 ./stretcher.py -i 'https://wikipedia.org' --leet --limit 10M > wordlist.txt
 [+] Spidered 291 pages
@@ -83,7 +83,7 @@ normalnormal
 [+] 9,792,383 words written (152.36MB)
 ~~~
 
-## Example: Pair with hashcat rules for maximum coverage
+## Example 3: Pair with hashcat rules for maximum coverage
 ~~~
 $ echo password | ./stretcher.py --capswap --leet | hashcat -r OneRuleToRuleThemAll.rule ...
 ~~~
