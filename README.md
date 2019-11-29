@@ -1,6 +1,6 @@
 # stretcher.py
 
-A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Generates capitalization and l33t vARIat1on$ of words.  You can specify the length of the output.
+**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Generates capitalization and l33t vARIat1on$ of words.  You can specify the length of the output.**
 
 <br>
 
@@ -26,15 +26,14 @@ optional arguments:
   -dd, --double         double each word (e.g. "Pass" --> "PassPass")
   -P INT, --permutations INT
                         max permutation depth (careful! massive output)
-  --limit LIMIT         limit length of output (default: max(100M, 1000x
-                        input))
+  --limit LIMIT         limit length of output (default: max(100M, 1000x input))
   --spider-depth SPIDER_DEPTH
                         maximum website spider depth (default: 1)
 ~~~
 
 <br>
 
-## Example 1: Create a list of 666,672 passwords (9.01MB) from only three words
+## Example 1: Create 666,672 passwords (9.01MB) from three words
 ~~~
 $ echo -e 'normal\nenglish\nwords' | ./stretcher.py --leet --capswap --permutations 2
 [+] Reading input wordlist... read 3 words.
@@ -72,7 +71,7 @@ normalnormal
 ...
 ~~~
 
-## Example 2: Create a 10-million-word list from a website
+## Example 2: Create 10 million passwords from a website
 ~~~
 ./stretcher.py -i 'https://wikipedia.org' --leet --limit 10M > wordlist.txt
 [+] Spidered 291 pages

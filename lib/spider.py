@@ -18,10 +18,16 @@ class Parser(HTMLParser):
     Keeps count of each word in self.words
     '''
 
-    words = dict()
-    word_regex = re.compile(r'\w{3,30}')
-    # stores each responses' links to other pages
-    temp_links = set()
+    def __init__(self, min_length=3, max_length=30):
+
+        self.word_regex = re.compile(r'\w{' + f'{min_length:d}' + ',' + f'{max_length:d}' + '}')
+
+        # track occurrences of each word
+        self.words = dict()
+        # stores each responses' links to other pages
+        self.temp_links = set()
+
+        super().__init__()
 
 
     def injest(self, html):
@@ -33,9 +39,14 @@ class Parser(HTMLParser):
         return list(self.temp_links)
 
 
-    def handle_words(self, data):
+    def handle_words(self, html):
 
-        for word in self.word_regex.findall(data):
+        # strip start tags
+        html = re.sub(r'<\w+', '', html)
+        # strip end tags
+        html = re.sub(r'</\w+>', '', html)
+
+        for word in self.word_regex.findall(html):
             try:
                 self.words[word] += 1
             except KeyError:
@@ -113,7 +124,7 @@ class Spider:
                 except ValueError:
                     continue
 
-        stderr.write(f'\r[+] Spidered {len(self.visited):,} pages')
+        stderr.write(f'\r[+] Found {len(self.parser.words):,} words in {len(self.visited):,} pages')
 
 
 

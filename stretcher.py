@@ -6,22 +6,23 @@ by TheTechromancer
 
 '''
 
+import os
+import sys
 from time import sleep
 from lib.utils import *
 from lib.errors import *
 from lib.mangler import *
 from lib.spider import Spider
-from sys import exit, stdin, stderr, stdout
 from argparse import ArgumentParser, ArgumentError
 
 
 
 def stretcher(options):
 
-    show_written_count = not stdout.isatty()
+    show_written_count = not sys.stdout.isatty()
     written_count = 0
 
-    stderr.write('[+] Reading input wordlist...')
+    sys.stderr.write('[+] Reading input wordlist...')
     mangler = Mangler(
         in_list=options.input,
         output_size=options.limit,
@@ -31,35 +32,35 @@ def stretcher(options):
         cap=options.cap,
         capswap=options.capswap,
     )
-    stderr.write(f' read {len(mangler.in_list):,} words.\n')
-    stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
+    sys.stderr.write(f' read {len(mangler.in_list):,} words.\n')
+    sys.stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
     if any([mangler.do_leet, mangler.do_cap]):
-        stderr.write('[+] Mutations allowed per word:\n')
+        sys.stderr.write('[+] Mutations allowed per word:\n')
         if mangler.do_leet:
-            stderr.write(f'     - leet:           {mangler.max_leet:,}\n')
+            sys.stderr.write(f'     - leet:           {mangler.max_leet:,}\n')
         if mangler.do_capswap:
-            stderr.write(f'     - capitalization: {mangler.max_cap:,}\n')
+            sys.stderr.write(f'     - capitalization: {mangler.max_cap:,}\n')
         elif mangler.do_cap:
-            stderr.write(f'     - capitalization: 6\n')
+            sys.stderr.write(f'     - capitalization: 6\n')
 
-    #stderr.write(f'[+] Estimated output: {len(mangler):,} words\n')
+    #sys.stderr.write(f'[+] Estimated output: {len(mangler):,} words\n')
 
     bytes_written = 0
     for mangled_word in mangler:
 
-        stdout.buffer.write(mangled_word + b'\n')
+        sys.stdout.buffer.write(mangled_word + b'\n')
         bytes_written += (len(mangled_word)+1
             )
         if show_written_count and written_count % 10000 == 0:
-            stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    ')
+            sys.stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    ')
 
         written_count += 1
 
     if show_written_count:
-        stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    \n')
+        sys.stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    \n')
 
-    stdout.buffer.flush()
-    stdout.close()
+    sys.stdout.buffer.flush()
+    sys.stdout.close()
 
 
 
@@ -85,7 +86,7 @@ if __name__ == '__main__':
         # print help if there's nothing to stretch
         if type(options.input) == ReadSTDIN and stdin.isatty():
             parser.print_help()
-            stderr.write('\n\n[!] Please specify wordlist or pipe to STDIN\n')
+            sys.stderr.write('\n\n[!] Please specify wordlist or pipe to STDIN\n')
             exit(2)
 
         elif type(options.input) == Spider:
@@ -94,15 +95,21 @@ if __name__ == '__main__':
 
         stretcher(options)
 
+    except BrokenPipeError:
+        # Python flushes standard streams on exit; redirect remaining output
+        # to devnull to avoid another BrokenPipeError at shutdown
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        sys.exit(1)  # Python exits with error code 1 on EPIPE
     except PasswordStretcherError as e:
-        stderr.write(f'\n[!] {e}\n')
+        sys.stderr.write(f'\n[!] {e}\n')
         exit(1)
     except ArgumentError:
-        stderr.write('\n[!] Check your syntax. Use -h for help.\n')
+        sys.stderr.write('\n[!] Check your syntax. Use -h for help.\n')
         exit(2)
     except AssertionError as e:
-        stderr.write('\n[!] {}\n'.format(str(e)))
+        sys.stderr.write('\n[!] {}\n'.format(str(e)))
         exit(1)
     except KeyboardInterrupt:
-        stderr.write('\n[!] Interrupted.\n')
+        sys.stderr.write('\n[!] Interrupted.\n')
         exit(2)
