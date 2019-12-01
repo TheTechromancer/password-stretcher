@@ -105,8 +105,6 @@ class Mangler():
 
 
 
-
-
     def set_output_size(self, target_size):
         '''
         sets self.max_cap and self.max_leet based on desired output size
@@ -120,7 +118,10 @@ class Mangler():
         num_mutators = len(self.mutators[1:])
 
         # multiply scales together
-        cumulative_scale = reduce(lambda x, y: x*y, [m.scale for m in self.mutators[1:]])
+        try:
+            cumulative_scale = reduce(lambda x, y: x*y, [m.scale for m in self.mutators[1:]])
+        except TypeError:
+            cumulative_scale = 1
 
         if self.cap and not self.capswap:
             x = int(x / Cap.cap_multiplier)
