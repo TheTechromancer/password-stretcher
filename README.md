@@ -1,6 +1,6 @@
 # stretcher.py
 
-**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Optionally generates cAPiTaliZAtiOn and l33t variations of words can append/prepend numbers & special characters.  You can specify the desired output length.**
+**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Optionally generates cAPiTaliZAtiOn and l33t variations of words and appends/prepends numbers & special characters.  You can specify the desired output length.**
 
 <br>
 
