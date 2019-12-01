@@ -27,6 +27,8 @@ class Pend(Mutator):
 
     def mutate(self, word):
 
+        yield word
+
         for rule in self.rules:
             yield rule.replace(b'\x00', word)
 

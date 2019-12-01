@@ -1,11 +1,11 @@
 # stretcher.py
 
-**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Generates cAPiTaliZAtiOn and l33t variations of words.  You can specify the desired output length.**
+**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Optionally generates cAPiTaliZAtiOn and l33t variations of words can append/prepend numbers & special characters.  You can specify the desired output length.**
 
 <br>
 
 ## Basics:
-`stretcher.py` allows you to apply l33t mutations to a list of words without going off the rails of a crazy train.  It prioritizes the most probable mutations and spreads them evenly across all words.  By default, output is set to 100 million words or 1000x times the input, whichever is larger.
+`stretcher.py` allows you to apply mutations to a list of words without going off the rails of a crazy train.  It prioritizes the most probable transforms and spreads them evenly across all words.  By default, output is set to 100 million words or 1000x times the input, whichever is larger.
 
 <br>
 

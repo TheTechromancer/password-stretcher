@@ -1,4 +1,4 @@
-# top 100000 non-alpha rules from the "RealPasswords" list
+# top 100000 digit/special append/prepend rules from the "RealPasswords" list
 # updated to prioritize newer dates (2010-2025)
 
 $1
