@@ -1,19 +1,19 @@
 # stretcher.py
 
-**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Generates capitalization and l33t vARIat1on$ of words.  You can specify the length of the output.**
+**A password mangler written in Python.  Generate a huge password list from a website, file, or pipe.  Generates cAPiTaliZAtiOn and l33t variations of words.  You can specify the desired output length.**
 
 <br>
 
 ## Basics:
-`stretcher.py` allows you to apply l33t mutations to a list of words without going off the rails of the crazy train.  It prioritizes the most probable mutations and spreads them evenly across all words.  By default, output is set to 100 million words or 1000x times the input, whichever is larger.
+`stretcher.py` allows you to apply l33t mutations to a list of words without going off the rails of a crazy train.  It prioritizes the most probable mutations and spreads them evenly across all words.  By default, output is set to 100 million words or 1000x times the input, whichever is larger.
 
 <br>
 
 ## Usage:
 ~~~
 $ ./stretcher.py --help
-usage: stretcher.py [-h] [-i] [-L] [-c] [-C] [-dd] [-P INT] [--limit LIMIT]
-                    [--spider-depth SPIDER_DEPTH]
+usage: stretcher.py [-h] [-i] [-L] [-c] [-C] [-p] [-dd] [-P INT]
+                    [--limit LIMIT] [--spider-depth SPIDER_DEPTH]
 
 FETCH THE PASSWORD STRETCHER
 
@@ -23,24 +23,27 @@ optional arguments:
   -L, --leet            "leetspeak" mutations
   -c, --cap             common upper/lowercase variations
   -C, --capswap         all possible case combinations
+  -p, --pend            append/prepend common digits & special characters
   -dd, --double         double each word (e.g. "Pass" --> "PassPass")
   -P INT, --permutations INT
                         max permutation depth (careful! massive output)
-  --limit LIMIT         limit length of output (default: max(100M, 1000x input))
+  --limit LIMIT         limit length of output (default: max(100M, 1000x
+                        input))
   --spider-depth SPIDER_DEPTH
                         maximum website spider depth (default: 1)
 ~~~
 
 <br>
 
-## Example 1: Create 666,672 passwords (9.01MB) from three words
+## Example 1: Create 10 million passwords from three words
 ~~~
-$ echo -e 'normal\nenglish\nwords' | ./stretcher.py --leet --capswap --permutations 2
+$ echo -e 'normal\nenglish\nwords' | ./stretcher.py --leet --capswap --pend --permutations 2 --limit 10M
 [+] Reading input wordlist... read 3 words.
-[*] Output capped at 393,216,000 words
+[*] Output capped at 10,000,000 words
 [+] Mutations allowed per word:
-     - leet:           4,047
-     - capitalization: 8,095
+       leet            43
+       capitalization  87
+       append/prepend  218
 words
 WORDS
 Words
@@ -73,7 +76,7 @@ normalnormal
 
 ## Example 2: Create 10 million passwords from a website
 ~~~
-./stretcher.py -i 'https://wikipedia.org' --leet --limit 10M > wordlist.txt
+$ ./stretcher.py -i 'https://wikipedia.org' --leet --limit 10M > wordlist.txt
 [+] Spidered 291 pages
 [+] Reading input wordlist... read 172,629 words.
 [*] Output capped at 10,000,000 words

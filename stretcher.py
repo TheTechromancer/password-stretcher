@@ -24,24 +24,21 @@ def stretcher(options):
 
     sys.stderr.write('[+] Reading input wordlist...')
     mangler = Mangler(
-        in_list=options.input,
+        _input=options.input,
         output_size=options.limit,
         double=options.double,
         perm=options.permutations,
         leet=options.leet,
         cap=options.cap,
         capswap=options.capswap,
+        pend=options.pend,
     )
-    sys.stderr.write(f' read {len(mangler.in_list):,} words.\n')
+    sys.stderr.write(f' read {len(mangler.input):,} words.\n')
     sys.stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
-    if any([mangler.do_leet, mangler.do_cap]):
+    if any([mangler.leet, mangler.cap, mangler.pend]):
         sys.stderr.write('[+] Mutations allowed per word:\n')
-        if mangler.do_leet:
-            sys.stderr.write(f'     - leet:           {mangler.max_leet:,}\n')
-        if mangler.do_capswap:
-            sys.stderr.write(f'     - capitalization: {mangler.max_cap:,}\n')
-        elif mangler.do_cap:
-            sys.stderr.write(f'     - capitalization: 6\n')
+        for mutator in mangler.mutators[1:]:
+            sys.stderr.write(f'       {str(mutator):<16}{mutator.limit:,}\n')
 
     #sys.stderr.write(f'[+] Estimated output: {len(mangler):,} words\n')
 
@@ -74,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('-L',       '--leet',           action='store_true',                        help='"leetspeak" mutations')
     parser.add_argument('-c',       '--cap',            action='store_true',                        help='common upper/lowercase variations')
     parser.add_argument('-C',       '--capswap',        action='store_true',                        help='all possible case combinations')
+    parser.add_argument('-p',       '--pend',           action='store_true',                        help='append/prepend common digits & special characters')
     parser.add_argument('-dd',      '--double',         action='store_true',                        help='double each word (e.g. "Pass" --> "PassPass")')
     parser.add_argument('-P',       '--permutations',   type=int,               default=1,          help='max permutation depth (careful! massive output)', metavar='INT')
     parser.add_argument('--limit',                      type=human_to_int,                          help='limit length of output (default: max(100M, 1000x input))')
