@@ -33,8 +33,11 @@ def stretcher(options):
         capswap=options.capswap,
         pend=options.pend,
     )
-    sys.stderr.write(f' read {len(mangler.input):,} words.\n')
-    sys.stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
+    sys.stderr.write(f' read {len(mangler.input):,} words {"(after basic cap mutations)" if (options.cap and not options.capswap) else ""}\n')
+    if options.permutations > 1:
+        sys.stderr.write(f'[*] Input wordlist after permutations: {mangler.input_length:,}\n')
+    else:
+        sys.stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
     if any([mangler.leet, mangler.cap, mangler.pend]):
         sys.stderr.write('[+] Mutations allowed per word:\n')
         for mutator in mangler.mutators[1:]:

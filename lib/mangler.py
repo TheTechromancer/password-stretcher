@@ -12,15 +12,12 @@ class Mangler():
 
     def __init__(self, _input, output_size=None, double=0, perm=0, leet=False, cap=False, capswap=False, pend=False, key=lambda x: x):
 
-        total_words     = 0
-        total_word_size = 0
-
         # load input list into memory and deduplicate
-        self.input = set()
-        for word in _input:
-            total_words += 1
-            total_word_size += len(word)
-            self.input.add(key(word))
+        if cap and not capswap:
+            self.input = set(Cap(_input))
+        else:
+            self.input = set(_input)
+
         self.input = list(self.input)
         self.input.sort(key=lambda x: len(x))
 
@@ -35,8 +32,8 @@ class Mangler():
 
         if self.leet:
             self.mutators.append(Leet(self.mutators[-1]))
-        if self.cap:
-            self.mutators.append(Cap(self.mutators[-1], capswap=self.capswap))
+        if self.capswap:
+            self.mutators.append(Cap(self.mutators[-1], capswap=True))
         if self.pend:
             self.mutators.append(Pend(self.mutators[-1]))
 
@@ -109,7 +106,12 @@ class Mangler():
         '''
         sets self.max_cap and self.max_leet based on desired output size
 
-        x * 2x * 5x = target_size
+        (s1*m) * (s2*m) * (s3*m) = t
+        where each () is a mutator
+        t = targe size (known)
+        m = multiplier (unknown)
+        s = mutator's scale (known)
+        solving for m
         '''
 
         self.output_size = target_size
@@ -123,8 +125,6 @@ class Mangler():
         except TypeError:
             cumulative_scale = 1
 
-        if self.cap and not self.capswap:
-            x = int(x / Cap.cap_multiplier)
         try:
             x = x / cumulative_scale
         except ArithmeticError:

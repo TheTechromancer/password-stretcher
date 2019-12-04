@@ -110,7 +110,7 @@ class Spider:
         if depth is None:
             depth = self.depth
 
-        if not url in self.visited and depth >= 0:
+        if not url in self.visited and depth > 0:
 
             response = self.session.get(url, headers=self.headers)
             self.visited.add(url)
