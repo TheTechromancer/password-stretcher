@@ -95,7 +95,7 @@ def human_to_int(h):
         i = float(''.join(c for c in h if c in string.digits + '.'))
         unit = ''.join([c for c in h if c in string.ascii_uppercase])
     except (ValueError, KeyError):
-        raise ValueError(f'Invalid filesize "{h}"')
+        raise ValueError(f'Invalid number "{h}"')
 
     return int(i * units[unit])
 
