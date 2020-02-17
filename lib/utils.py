@@ -88,7 +88,7 @@ def human_to_int(h):
     if type(h) == int:
         return h
 
-    units = {'': 1, 'K': 1024, 'M': 1024**2, 'B': 1024**3, 'T': 1024**4}
+    units = {'': 1, 'K': 1000, 'M': 1000**2, 'B': 1000**3, 'T': 1000**4}
 
     try:
         h = h.upper().strip()
@@ -108,10 +108,8 @@ def bytes_to_human(_bytes):
 
     sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
     units = {}
-    count = 0
-    for size in sizes:
+    for count,size in enumerate(sizes):
         units[size] = pow(1024, count)
-        count +=1
 
     for size in sizes:
         if abs(_bytes) < 1024.0:
