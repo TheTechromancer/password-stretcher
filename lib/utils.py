@@ -88,7 +88,7 @@ def human_to_int(h):
     if type(h) == int:
         return h
 
-    units = {'': 1, 'K': 1000, 'M': 1000**2, 'B': 1000**3, 'T': 1000**4}
+    units = {'': 1, 'K': 1024, 'M': 1024**2, 'B': 1024**3, 'T': 1024**4}
 
     try:
         h = h.upper().strip()
