@@ -12,8 +12,7 @@
 ## Usage:
 ~~~
 $ ./stretcher.py --help
-usage: stretcher.py [-h] [-i] [-L] [-c] [-C] [-p] [-dd] [-P INT]
-                    [--limit LIMIT] [--spider-depth SPIDER_DEPTH]
+usage: stretcher.py [-h] [-i] [-L] [-c] [-C] [-p] [-dd] [-P INT] [-m INT] [-M INT] [--limit LIMIT] [--spider-depth SPIDER_DEPTH]
 
 FETCH THE PASSWORD STRETCHER
 
@@ -27,8 +26,11 @@ optional arguments:
   -dd, --double         double each word (e.g. "Pass" --> "PassPass")
   -P INT, --permutations INT
                         max permutation depth (careful! massive output)
-  --limit LIMIT         limit length of output (default: max(100M, 1000x
-                        input))
+  -m INT, --min-length INT
+                        minimum password length (for output)
+  -M INT, --max-length INT
+                        maximum password length (for output)
+  --limit LIMIT         limit length of output (default: max(100M, 1000x input))
   --spider-depth SPIDER_DEPTH
                         maximum website spider depth (default: 1)
 ~~~

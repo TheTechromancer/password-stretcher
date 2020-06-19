@@ -35,8 +35,6 @@ class Pend(Mutator):
 
     def read_rules(self, rule_dir=None):
 
-        print('reading rules')
-
         if rule_dir is None:
             rule_dir = Path(__file__).resolve().parent.parent / 'lists'
 
