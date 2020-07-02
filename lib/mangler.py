@@ -6,11 +6,12 @@ import itertools
 from .cap import Cap
 from .leet import Leet
 from .pend import Pend
+from .perm import Perm
 from functools import reduce
 
 class Mangler():
 
-    def __init__(self, _input, output_size=None, double=0, perm=0, leet=False, cap=False, capswap=False, pend=False, key=lambda x: x):
+    def __init__(self, _input, output_size=None, double=False, perm=0, leet=False, cap=False, capswap=False, pend=False, key=lambda x: x):
 
         # load input list into memory and deduplicate
         if cap and not capswap:
@@ -28,7 +29,7 @@ class Mangler():
         self.double     = double
         self.pend       = pend
 
-        self.mutators = [self.perm()]
+        self.mutators = [Perm(self.input, double=double, perm_depth=perm)]
 
         if self.leet:
             self.mutators.append(Leet(self.mutators[-1]))
@@ -59,9 +60,7 @@ class Mangler():
         Estimates the total output length based on requested mangling parameters
         '''
 
-        length = int(self.input_length)
-
-        for m in self.mutators[1:]:
+        for m in self.mutators:
             length *= len(m)
 
         return int(length)
@@ -80,27 +79,6 @@ class Mangler():
         return self.chain_mutators(mutators[0].gen(_input), mutators[1:])
 
 
-    def perm(self):
-        '''
-        permutates words from iterable
-        takes:      iterable containing words
-        yields:     word permutations ('pass', 'word' --> 'password', 'wordpass', etc.)
-        '''
-
-        if self.perm_depth > 1:
-            for d in range(1, self.perm_depth+1):
-                for p in itertools.product(self.input, repeat=d):
-                    yield b''.join(p)
-
-        else:
-            for word in self.input:
-
-                yield word
-
-                if self.double:
-                    yield word + word
-
-
 
     def set_output_size(self, target_size):
         '''
@@ -116,7 +94,7 @@ class Mangler():
 
         self.output_size = target_size
 
-        x = target_size / self.input_length
+        x = target_size / len(self.mutators[0])
         num_mutators = len(self.mutators[1:])
 
         # multiply scales together
@@ -152,20 +130,3 @@ class Mangler():
         elif self.leet:
             self.max_leet = max(1, int(multiplier))
         '''
-
-
-    @property
-    def input_length(self):
-
-        length = len(self.input)
-
-        if self.perm_depth > 1:
-            initial_length = len(self.input)
-            for i in range(2, self.perm_depth+1):
-                length += initial_length ** i
-
-        elif self.double:
-            length *= 2
-
-        # prevent division by zero
-        return max(1, length)

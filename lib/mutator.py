@@ -8,7 +8,9 @@ class Mutator():
     base class for mutators like capswap, leet, and *pend
     '''
 
-    # prioritization compared to other mutators
+    # prioritization compared to other mutators when limit is being enforced
+    # e.g. "pend" gets a scale of 5 while "leet" gets 1
+    # this means that for every 1 leet mutation, there are 5 pend mutations
     scale = 1
     # friendly name to describe mutator type
     fname = 'mutator'

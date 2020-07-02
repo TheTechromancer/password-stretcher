@@ -40,7 +40,7 @@ def stretcher(options):
     )
     sys.stderr.write(f' read {len(mangler.input):,} words {"(after basic cap mutations)" if (options.cap and not options.capswap) else ""}\n')
     if options.permutations > 1:
-        sys.stderr.write(f'[*] Input wordlist after permutations: {mangler.input_length:,}\n')
+        sys.stderr.write(f'[*] Input wordlist after permutations: {len(mangler.mutators[0]):,}\n')
     else:
         sys.stderr.write(f'[*] Output capped at {mangler.output_size:,} words\n')
     if any([mangler.leet, mangler.cap, mangler.pend]):
@@ -50,7 +50,7 @@ def stretcher(options):
     if options.min_length is not None:
         sys.stderr.write(f'[+] Discarding words shorter than {options.min_length:,} characters, output size may be reduced\n')
     if options.max_length is not None:
-        sys.stderr.write(f'[+] Discarding words longer than {options.min_length:,} characters, output size may be reduced\n')
+        sys.stderr.write(f'[+] Discarding words longer than {options.max_length:,} characters, output size may be reduced\n')
 
     #sys.stderr.write(f'[+] Estimated output: {len(mangler):,} words\n')
 
@@ -61,12 +61,15 @@ def stretcher(options):
             (options.max_length is None or len(mangled_word) <= options.max_length):
 
             sys.stdout.buffer.write(mangled_word + b'\n')
-            bytes_written += (len(mangled_word)+1
-                )
+            bytes_written += (len(mangled_word)+1)
             if show_written_count and written_count % 10000 == 0:
                 sys.stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    ')
 
             written_count += 1
+
+        else:
+            # if the word didn't meet length requirements, increase the limit by 1
+            mangler.mutators[-1].cur_limit += 1
 
     if show_written_count:
         sys.stderr.write(f'\r[+] {written_count:,} words written ({bytes_to_human(bytes_written)})    \n')
