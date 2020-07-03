@@ -2,7 +2,6 @@
 
 # by TheTechromancer
 
-import itertools
 from .cap import Cap
 from .leet import Leet
 from .pend import Pend
