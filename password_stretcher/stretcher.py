@@ -9,10 +9,10 @@ by TheTechromancer
 import os
 import sys
 from time import sleep
-from lib.utils import *
-from lib.errors import *
-from lib.mangler import *
-from lib.spider import Spider
+from password_stretcher.lib.utils import *
+from password_stretcher.lib.errors import *
+from password_stretcher.lib.mangler import *
+from password_stretcher.lib.spider import Spider
 from argparse import ArgumentParser, ArgumentError
 
 
@@ -79,8 +79,8 @@ def stretcher(options):
 
 
 
-if __name__ == '__main__':
 
+def main():
     ### ARGUMENTS ###
 
     parser = ArgumentParser(description='FETCH THE PASSWORD STRETCHER')
@@ -131,3 +131,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         sys.stderr.write('\n[!] Interrupted.\n')
         exit(2)
+
+
+if __name__ == '__main__':
+    main()
