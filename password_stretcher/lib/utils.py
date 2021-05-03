@@ -9,31 +9,60 @@ from urllib.parse import urlparse
 from .errors import InputListError
 
 
-def read_uri(uri):
+def read_uris(uris):
 
-    if any(uri.startswith(x) for x in ['http://', 'https://']):
-        from .spider import Spider
-        return Spider(uri)
-    else:
-        return ReadFile(uri)
+    files = []
+    for uri in uris:
+        if any([uri.startswith(x) for x in ['http://', 'https://']]):
+            from .spider import Spider
+            return Spider(uri)
+        else:
+            files.append(uri)
+
+    return ReadFiles(*files)
+
+
+class ReadFiles():
+
+    def __init__(self, *filenames, binary=True):
+
+        self.files = [ReadFile(filename, binary=binary) for filename in filenames]
+
+    def __iter__(self):
+
+        for file in self.files:
+            yield from file
 
 
 class ReadFile():
 
-    def __init__(self, filename):
+    def __init__(self, filename, binary=True):
 
-        self.filename = str(filename)
+        self.filename = Path(filename)
+        if binary:
+            self.mode = 'rb'
+            self.strip = b'\r\n'
+        else:
+            self.mode = 'r'
+            self.strip = '\r\n'
 
-        if not Path(self.filename).is_file():
-            raise InputListError(f'Cannot find the file {self.filename}.  use "https://", for website')
+        if not self.filename.exists() or self.filename.is_dir():
+            raise InputListError(f'Cannot find the file {self.filename}')
 
 
 
     def __iter__(self):
 
-        with open(self.filename, 'rb') as f:
-            for line in f:
-                line = line.strip(b'\r\n')
+        with open(self.filename, self.mode) as f:
+            i = f.__iter__()
+            while 1:
+                try:
+                    line = next(i)
+                except StopIteration:
+                    break
+                except UnicodeError:
+                    pass
+                line = line.strip(self.strip)
                 if line:
                     yield line
 
@@ -41,12 +70,21 @@ class ReadFile():
 
 class ReadSTDIN():
 
+    def __init__(self, binary=True):
+
+        if binary:
+            self.buffer = stdin.buffer
+            self.strip = b'\r\n'
+        else:
+            self.buffer = stdin
+            self.strip = '\r\n'
+
     def __iter__(self):
 
         while 1:
-            line = stdin.buffer.readline()
+            line = self.buffer.readline()
             if line:
-                line = line.strip(b'\r\n')
+                line = line.strip(self.strip)
                 if line:
                     yield line
             else:
@@ -143,3 +181,14 @@ def url_to_domain(url):
         return hostname_to_domain(urlparse(url).hostname).lower()
     except AttributeError:
         raise ValueError(f'Invalid URL: {url}')
+
+
+def thread_wrapper(target, *args, **kwargs):
+
+    try:
+        target(*args, **kwargs)
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        import traceback
+        traceback.print_exc()

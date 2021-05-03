@@ -6,8 +6,8 @@ import re
 import requests
 import urllib.parse
 from sys import stderr
-from .utils import url_to_domain
 from .errors import SpiderError
+from .utils import url_to_domain
 from html.parser import HTMLParser
 
 
@@ -18,9 +18,9 @@ class Parser(HTMLParser):
     Keeps count of each word in self.words
     '''
 
-    def __init__(self, min_length=3, max_length=30):
+    def __init__(self):
 
-        self.word_regex = re.compile(r'\w{' + f'{min_length:d}' + ',' + f'{max_length:d}' + '}')
+        self.word_regex = re.compile(r'[a-z][a-z01357$@]+[a-z]', re.I)
 
         # track occurrences of each word
         self.words = dict()
@@ -42,9 +42,9 @@ class Parser(HTMLParser):
     def handle_words(self, html):
 
         # strip start tags
-        html = re.sub(r'<\w+', '', html)
+        #html = re.sub(r'<\w+', '', html)
         # strip end tags
-        html = re.sub(r'</\w+>', '', html)
+        #html = re.sub(r'</\w+>', '', html)
 
         for word in self.word_regex.findall(html):
             try:
@@ -80,7 +80,11 @@ class Parser(HTMLParser):
 
 class Spider:
 
-    def __init__(self, url, depth=2):
+    def __init__(self, url, depth=2, user_agent=None):
+
+        if user_agent is None:
+            user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36 Edg/89.0.774.75'
+        self.user_agent = user_agent
 
         self.url = url
         self.base_domain = url_to_domain(url)
@@ -89,11 +93,20 @@ class Spider:
         self.visited = set()
         self.depth = depth
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/75.0.3770.90 Chrome/75.0.3770.90 Safari/537.36',
+            'Upgrade-Insecure-Requests': '1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9'
         }
 
 
     def start(self):
+
+        self.headers.update({'User-Agent': self.user_agent})
 
         try:
             self.get(self.url)

@@ -10,3 +10,6 @@ class SpiderError(PasswordStretcherError):
 
 class InputListError(PasswordStretcherError):
     pass
+
+class PasswordAnalyzerError(PasswordStretcherError):
+    pass
