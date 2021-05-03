@@ -1,7 +1,5 @@
 # by TheTechromancer
 
-from unidecode import unidecode
-
 # This was adapted from the Password Statistical Analysis tool by Peter Kacherginsky
 # https://github.com/iphelix/pack
 
@@ -51,7 +49,7 @@ class PasswordPolicy:
             try:
                 password = password.decode()
             except UnicodeError:
-                password = unidecode(password)
+                password = str(password)[2:-1]
 
         #if pass_length is None or charset is None:
         meets_policy, pass_length, charset, num_charsets, simplemask, advancedmask = self.analyze_password(password, calc_policy=False)

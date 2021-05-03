@@ -58,13 +58,13 @@ class ReadFile():
             while 1:
                 try:
                     line = next(i)
+                    line = line.strip(self.strip)
+                    if line:
+                        yield line
                 except StopIteration:
                     break
                 except UnicodeError:
-                    pass
-                line = line.strip(self.strip)
-                if line:
-                    yield line
+                    continue
 
 
 
