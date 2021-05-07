@@ -2,8 +2,8 @@
 
 # by TheTechromancer
 
+import sys
 import string
-from sys import stdin
 from pathlib import Path
 from urllib.parse import urlparse
 from .errors import InputListError
@@ -58,12 +58,16 @@ class ReadFile():
             while 1:
                 try:
                     line = next(i)
-                    line = line.strip(self.strip)
+                    if not line:
+                        break
+                    line = line.rstrip(self.strip)
                     if line:
                         yield line
                 except StopIteration:
                     break
-                except UnicodeError:
+                except UnicodeDecodeError as e:
+                    for line in e.object.splitlines():
+                        yield str(line)[2:-1]
                     continue
 
 
@@ -73,16 +77,19 @@ class ReadSTDIN():
     def __init__(self, binary=True):
 
         if binary:
-            self.buffer = stdin.buffer
+            self.buffer = sys.stdin.buffer
             self.strip = b'\r\n'
         else:
-            self.buffer = stdin
+            self.buffer = sys.stdin
             self.strip = '\r\n'
 
     def __iter__(self):
 
         while 1:
-            line = self.buffer.readline()
+            try:
+                line = self.buffer.readline()
+            except UnicodeDecodeError:
+                line = str(sys.stdin.buffer.readline())[2:-1]
             if line:
                 line = line.strip(self.strip)
                 if line:

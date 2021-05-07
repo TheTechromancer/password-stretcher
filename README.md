@@ -1,6 +1,6 @@
 ![password-stretcher](https://user-images.githubusercontent.com/20261699/117364575-14a5d980-ae8c-11eb-815d-32827cc5297b.png)
 
-**Generate disgusting quantities of passwords from websites, files, or stdin.** Compliments [password-smelter](https://github.com/thetechromancer/password-smelter)
+**Generate disgusting quantities of passwords from websites, files, or stdin.** Compliments [password-smelter](https://github.com/thetechromancer/password-smelter).
 
 ## Installation
 ~~~

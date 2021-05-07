@@ -106,7 +106,7 @@ def main():
         options = parser.parse_args()
 
         # print help if there's nothing to stretch
-        if type(options.input) == ReadSTDIN and stdin.isatty():
+        if type(options.input) == ReadSTDIN and sys.stdin.isatty():
             parser.print_help()
             sys.stderr.write('\n\n[!] Please specify wordlist(s) or pipe to STDIN\n')
             exit(2)
