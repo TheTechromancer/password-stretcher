@@ -13,33 +13,16 @@ $ pip install password-stretcher
 ### Aren't hashcat rules better?
 Hashcat rules are great for quickly covering the most probable mutations of a password. `password-stretcher` can cover them all. This is useful if you KNOW or HEAVILY SUSPECT that the password is a variation of a specific word or list of words, but you haven't been able to crack it using hashcat rules.
 
-When enabling `--leet` or `--capswap` mutations, you can be sure that `password-stretcher` will generate **every possible mutation**. Even when you `--limit` the results, it will prioritize the most probable ones. Here, you can see that enabling both `--leet` and `--capswap` on a single word ("pass") results in 96 mutations:
+When enabling `--leet` or `--capswap` mutations, you can be sure that `password-stretcher` will generate **every possible mutation**. Even when you `--limit` the results, it will prioritize the most probable ones. Here, you can see that enabling both `--leet` and `--capswap` on a single word ("pass") results in 96 mutations, beginning with the simplest and gradually increasing in complexity:
 ~~~
-$ echo pass | password-stretcher --leet --capswap | wc -l
+$ echo pass | password-stretcher --leet --capswap | tr '\n' ' '
 [+] Reading input wordlist... read 1 words 
 [*] Output capped at 100,000,000 words
 [+] Mutations allowed per word:
        leet            7,071
        capitalization  14,142
 [+] 96 words written (480B)    
-96
-~~~
-**However,** when we `--limit` the results, only the most common mutations are chosen:
-~~~
-$ echo pass | password-stretcher --leet --capswap --limit 10
-[+] Reading input wordlist... read 1 words 
-[*] Output capped at 10 words
-[+] Mutations allowed per word:
-       leet            2
-       capitalization  4
-pass
-PASS
-Pass
-pAss
-p@ss
-P@SS
-P@ss
-P@Ss
+pass PASS Pass pAss PAss paSs PaSs pASs PASs pasS PasS pAsS PAsS paSS PaSS pASS p@ss P@SS P@ss P@Ss p@Ss p@sS P@sS p@SS pas5 PAS5 Pas5 pAs5 PAs5 paS5 PaS5 pAS5 p@s5 P@S5 P@s5 p@S5 pas$ PAS$ Pas$ pAs$ PAs$ paS$ PaS$ pAS$ p@s$ P@S$ P@s$ p@S$ pa5s PA5S Pa5s Pa5S pA5s PA5s pa5S pA5S p@5s P@5S P@5s p@5S pa55 PA55 Pa55 pA55 p@55 P@55 pa5$ PA5$ Pa5$ pA5$ p@5$ P@5$ pa$s PA$S Pa$s Pa$S pA$s PA$s pa$S pA$S p@$s P@$S P@$s p@$S pa$5 PA$5 Pa$5 pA$5 p@$5 P@$5 pa$$ PA$$ Pa$$ pA$$ p@$$ P@$$
 ~~~
 
 <br>
