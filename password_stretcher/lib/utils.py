@@ -8,6 +8,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 from .errors import InputListError
 
+# UnicodeDammit
+import logging
+from bs4 import UnicodeDammit
+logging.disable(logging.WARNING)
+
 
 def read_uris(uris):
 
@@ -39,6 +44,7 @@ class ReadFile():
     def __init__(self, filename, binary=True):
 
         self.filename = Path(filename)
+        self.binary = binary
         if binary:
             self.mode = 'rb'
             self.strip = b'\r\n'
@@ -53,6 +59,8 @@ class ReadFile():
 
     def __iter__(self):
 
+        fucky_errors = 0
+
         with open(self.filename, self.mode) as f:
             i = f.__iter__()
             while 1:
@@ -63,12 +71,17 @@ class ReadFile():
                     line = line.rstrip(self.strip)
                     if line:
                         yield line
+                        fucky_errors = 0
                 except StopIteration:
                     break
                 except UnicodeDecodeError as e:
-                    for line in e.object.splitlines():
-                        yield str(line)[2:-1]
-                    continue
+                    if fucky_errors > 10000:
+                        break
+                    for line in UnicodeDammit(e.object).unicode_markup.splitlines()[1:-1]:
+                        yield line.rstrip(self.strip)
+                        fucky_errors = 0
+                    else:
+                        fucky_errors += 1
 
 
 
