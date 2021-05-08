@@ -13,7 +13,7 @@ $ pip install password-stretcher
 ### Aren't hashcat rules better?
 Hashcat rules are great for quickly covering the most probable mutations of a password. `password-stretcher` can cover them all. This is useful if you KNOW or HEAVILY SUSPECT that the password is a variation of a specific word or list of words, but you haven't been able to crack it using hashcat rules.
 
-When enabling `--leet` or `--capswap` mutations, you can be sure that `password-stretcher` will generate **100%** coverage. Even when you `--limit` the results, it will prioritize the most probable ones. Here, you can see that enabling both `--leet` and `--capswap` on a single word ("pass") results in 96 mutations:
+When enabling `--leet` or `--capswap` mutations, you can be sure that `password-stretcher` will generate **every possible mutation**. Even when you `--limit` the results, it will prioritize the most probable ones. Here, you can see that enabling both `--leet` and `--capswap` on a single word ("pass") results in 96 mutations:
 ~~~
 $ echo pass | password-stretcher --leet --capswap | wc -l
 [+] Reading input wordlist... read 1 words 
