@@ -22,7 +22,13 @@ $ echo pass | password-stretcher --leet --capswap | tr '\n' ' '
        leet            7,071
        capitalization  14,142
 [+] 96 words written (480B)    
-pass PASS Pass pAss PAss paSs PaSs pASs PASs pasS PasS pAsS PAsS paSS PaSS pASS p@ss P@SS P@ss P@Ss p@Ss p@sS P@sS p@SS pas5 PAS5 Pas5 pAs5 PAs5 paS5 PaS5 pAS5 p@s5 P@S5 P@s5 p@S5 pas$ PAS$ Pas$ pAs$ PAs$ paS$ PaS$ pAS$ p@s$ P@S$ P@s$ p@S$ pa5s PA5S Pa5s Pa5S pA5s PA5s pa5S pA5S p@5s P@5S P@5s p@5S pa55 PA55 Pa55 pA55 p@55 P@55 pa5$ PA5$ Pa5$ pA5$ p@5$ P@5$ pa$s PA$S Pa$s Pa$S pA$s PA$s pa$S pA$S p@$s P@$S P@$s p@$S pa$5 PA$5 Pa$5 pA$5 p@$5 P@$5 pa$$ PA$$ Pa$$ pA$$ p@$$ P@$$
+pass PASS Pass pAss PAss paSs PaSs pASs PASs pasS PasS pAsS PAsS paSS
+PaSS pASS p@ss P@SS P@ss P@Ss p@Ss p@sS P@sS p@SS pas5 PAS5 Pas5 pAs5
+PAs5 paS5 PaS5 pAS5 p@s5 P@S5 P@s5 p@S5 pas$ PAS$ Pas$ pAs$ PAs$ paS$
+PaS$ pAS$ p@s$ P@S$ P@s$ p@S$ pa5s PA5S Pa5s Pa5S pA5s PA5s pa5S pA5S
+p@5s P@5S P@5s p@5S pa55 PA55 Pa55 pA55 p@55 P@55 pa5$ PA5$ Pa5$ pA5$
+p@5$ P@5$ pa$s PA$S Pa$s Pa$S pA$s PA$s pa$S pA$S p@$s P@$S P@$s p@$S
+pa$5 PA$5 Pa$5 pA$5 p@$5 P@$5 pa$$ PA$$ Pa$$ pA$$ p@$$ P@$$
 ~~~
 
 <br>
