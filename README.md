@@ -8,7 +8,7 @@ $ pip install password-stretcher
 ~~~
 
 ## Basics:
-`password-stretcher` allows you to apply mutations to a list of words.  It prioritizes the most probable transforms and spreads them evenly across all input.  By default, output is set to 100 million words or 1000x times the input, whichever is larger.
+`password-stretcher` mutates a list of words. It prioritizes the most probable mutations and spreads them evenly across all input. By default, output is set to 100 million words or 1000x times the input, whichever is larger.
 
 ### Aren't hashcat rules better?
 Hashcat rules are great for quickly covering the most probable mutations of a password. `password-stretcher` can cover them all. This is useful if you KNOW or HEAVILY SUSPECT that the password is a variation of a specific word or list of words, but you haven't been able to crack it using hashcat rules.
