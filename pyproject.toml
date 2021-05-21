@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "password-stretcher"
-version = "1.0.3"
+version = "1.0.4"
 description = "A deadly password mangler"
 authors = ["TheTechromancer"]
 license = "GPL-3.0"
@@ -9,7 +9,7 @@ license = "GPL-3.0"
 password-stretcher = 'password_stretcher.stretcher:main'
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.6"
 requests = "^2.25.1"
 beautifulsoup4 = "^4.9.3"
 
