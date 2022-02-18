@@ -37,6 +37,7 @@ def stretcher(options):
         _input=options.input,
         output_size=options.limit,
         double=options.double,
+        deconstruct=options.deconstruct,
         perm=options.permutations,
         leet=options.leet,
         cap=options.cap,
@@ -89,6 +90,7 @@ def main():
     mangling.add_argument('-c', '--cap', action='store_true', help='common upper/lowercase variations')
     mangling.add_argument('-C', '--capswap', action='store_true', help='all possible case combinations')
     mangling.add_argument('-p', '--pend', action='store_true', help='append/prepend common digits & special characters')
+    mangling.add_argument('-d', '--deconstruct', action='store_true', help='extract smaller words from input list')
     mangling.add_argument('-dd', '--double', action='store_true', help='double each word (e.g. "Pass" --> "PassPass")')
     mangling.add_argument('-P', '--permutations',type=int, default=1, help='max permutation depth (careful! massive output)', metavar='INT')
     filters = argparse.ArgumentParser.add_argument_group(parser, 'password complexity filters')

@@ -6,17 +6,21 @@ from .cap import Cap
 from .leet import Leet
 from .pend import Pend
 from .perm import Perm
+from .deconstruct import Deconstruct
 from functools import reduce
 
 class Mangler():
 
-    def __init__(self, _input, output_size=None, double=False, perm=0, leet=False, cap=False, capswap=False, pend=False, key=lambda x: x):
+    def __init__(self, _input, output_size=None, double=False, deconstruct=False, perm=0, leet=False, cap=False, capswap=False, pend=False, key=lambda x: x):
 
         # load input list into memory and deduplicate
+        self.input = set(_input)
+
+        if deconstruct:
+            self.input = set(Deconstruct(self.input))
+
         if cap and not capswap:
-            self.input = set(Cap(_input))
-        else:
-            self.input = set(_input)
+            self.input = set(Cap(self.input))
 
         self.input = list(self.input)
         self.input.sort(key=lambda x: len(x))
